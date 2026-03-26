@@ -1,0 +1,126 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#1a0a2e"/>
+      <stop offset="100%" stop-color="#0a0514"/>
+    </radialGradient>
+    <radialGradient id="eyeGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#c084fc" stop-opacity="0.8"/>
+      <stop offset="60%" stop-color="#7c3aed" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#1a0a2e" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="irisGrad" cx="45%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#a78bfa"/>
+      <stop offset="40%" stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#4c1d95"/>
+    </radialGradient>
+    <linearGradient id="orbitA" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#c084fc" stop-opacity="0.7"/>
+      <stop offset="50%" stop-color="#7c3aed" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#c084fc" stop-opacity="0.7"/>
+    </linearGradient>
+    <linearGradient id="orbitB" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f0abfc" stop-opacity="0.5"/>
+      <stop offset="50%" stop-color="#a855f7" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#f0abfc" stop-opacity="0.5"/>
+    </linearGradient>
+    <linearGradient id="orbitC" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#818cf8" stop-opacity="0.6"/>
+      <stop offset="50%" stop-color="#6366f1" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#818cf8" stop-opacity="0.6"/>
+    </linearGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="softGlow"><feGaussianBlur stdDeviation="8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="deepGlow"><feGaussianBlur stdDeviation="15" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+
+  <!-- Background -->
+  <circle cx="200" cy="200" r="200" fill="url(#bg)"/>
+
+  <!-- Stars -->
+  <g opacity="0.35">
+    <circle cx="55" cy="40" r="1" fill="#e9d5ff"/><circle cx="340" cy="75" r="1.2" fill="#e9d5ff"/>
+    <circle cx="125" cy="345" r="0.8" fill="#c4b5fd"/><circle cx="365" cy="305" r="1" fill="#c4b5fd"/>
+    <circle cx="35" cy="255" r="0.9" fill="#e9d5ff"/><circle cx="275" cy="25" r="1" fill="#e9d5ff"/>
+    <circle cx="350" cy="165" r="0.7" fill="#c4b5fd"/><circle cx="45" cy="155" r="1.1" fill="#e9d5ff"/>
+    <circle cx="305" cy="365" r="0.8" fill="#c4b5fd"/><circle cx="165" cy="365" r="1" fill="#e9d5ff"/>
+    <circle cx="85" cy="95" r="0.6" fill="#c4b5fd"/><circle cx="325" cy="125" r="0.8" fill="#e9d5ff"/>
+  </g>
+
+  <!-- Ambient halos -->
+  <circle cx="200" cy="200" r="140" fill="none" stroke="#c084fc" stroke-width="0.4" opacity="0.06"/>
+  <circle cx="200" cy="200" r="120" fill="none" stroke="#a855f7" stroke-width="0.4" opacity="0.08"/>
+
+  <!-- Orbital rings (thought orbits) -->
+  <g transform="rotate(-25, 200, 200)">
+    <ellipse cx="200" cy="200" rx="155" ry="50" fill="none" stroke="url(#orbitC)" stroke-width="1.2" opacity="0.6"/>
+  </g>
+  <g transform="rotate(45, 200, 200)">
+    <ellipse cx="200" cy="200" rx="130" ry="42" fill="none" stroke="url(#orbitB)" stroke-width="1.3" opacity="0.7"/>
+  </g>
+  <g transform="rotate(5, 200, 200)">
+    <ellipse cx="200" cy="200" rx="105" ry="30" fill="none" stroke="url(#orbitA)" stroke-width="1.8" opacity="0.8"/>
+  </g>
+
+  <!-- Orbit nodes (thought particles) -->
+  <g transform="rotate(-25, 200, 200)" filter="url(#glow)">
+    <circle cx="355" cy="200" r="3.5" fill="#818cf8"/><circle cx="45" cy="200" r="2.5" fill="#818cf8" opacity="0.6"/>
+  </g>
+  <g transform="rotate(45, 200, 200)" filter="url(#glow)">
+    <circle cx="330" cy="200" r="4" fill="#f0abfc"/><circle cx="70" cy="200" r="2.5" fill="#f0abfc" opacity="0.5"/>
+  </g>
+  <g transform="rotate(5, 200, 200)" filter="url(#glow)">
+    <circle cx="305" cy="200" r="3" fill="#c084fc"/><circle cx="95" cy="200" r="2.5" fill="#c084fc" opacity="0.6"/>
+  </g>
+
+  <!-- Eye glow aura -->
+  <circle cx="200" cy="200" r="65" fill="url(#eyeGlow)" filter="url(#deepGlow)"/>
+
+  <!-- Eye outer shape -->
+  <g filter="url(#softGlow)">
+    <path d="M 120 200 Q 200 130 280 200 Q 200 270 120 200 Z" fill="none" stroke="#c084fc" stroke-width="2.5" opacity="0.9"/>
+  </g>
+  <path d="M 130 200 Q 200 140 270 200 Q 200 260 130 200 Z" fill="none" stroke="#a855f7" stroke-width="1.2" opacity="0.5"/>
+
+  <!-- Iris -->
+  <circle cx="200" cy="200" r="38" fill="url(#irisGrad)" opacity="0.85" filter="url(#glow)"/>
+  <circle cx="200" cy="200" r="38" fill="none" stroke="#c084fc" stroke-width="1" opacity="0.6"/>
+
+  <!-- Iris texture rays -->
+  <g stroke="#e9d5ff" stroke-width="0.5" opacity="0.25">
+    <line x1="200" y1="163" x2="200" y2="175"/><line x1="200" y1="225" x2="200" y2="237"/>
+    <line x1="163" y1="200" x2="175" y2="200"/><line x1="225" y1="200" x2="237" y2="200"/>
+    <line x1="174" y1="174" x2="182" y2="182"/><line x1="218" y1="218" x2="226" y2="226"/>
+    <line x1="226" y1="174" x2="218" y2="182"/><line x1="174" y1="226" x2="182" y2="218"/>
+  </g>
+
+  <!-- Pupil -->
+  <circle cx="200" cy="200" r="16" fill="#0a0514" opacity="0.95"/>
+  <circle cx="200" cy="200" r="14" fill="#1a0a2e"/>
+
+  <!-- Dice pips in pupil (2d6 reference — showing ⚁) -->
+  <circle cx="194" cy="194" r="2" fill="#c084fc" opacity="0.7"/>
+  <circle cx="206" cy="206" r="2" fill="#c084fc" opacity="0.7"/>
+
+  <!-- Eye highlight -->
+  <circle cx="190" cy="190" r="6" fill="white" opacity="0.15"/>
+  <circle cx="188" cy="188" r="3" fill="white" opacity="0.3"/>
+
+  <!-- Code brackets flanking the eye -->
+  <g fill="none" stroke="#818cf8" stroke-width="1.8" stroke-linecap="round" opacity="0.7" filter="url(#glow)">
+    <polyline points="105,188 93,200 105,212"/>
+    <polyline points="295,188 307,200 295,212"/>
+  </g>
+
+  <!-- Neural traces -->
+  <g stroke="#c084fc" stroke-width="0.5" opacity="0.1" fill="none">
+    <path d="M 80 200 L 105 200 L 112 185 L 125 185"/>
+    <path d="M 320 200 L 295 200 L 288 215 L 275 215"/>
+    <path d="M 200 80 L 200 105 L 215 112 L 215 130"/>
+    <path d="M 200 320 L 200 295 L 185 288 L 185 270"/>
+  </g>
+  <g fill="#c084fc" opacity="0.2">
+    <circle cx="105" cy="200" r="1.5"/><circle cx="295" cy="200" r="1.5"/>
+    <circle cx="200" cy="105" r="1.5"/><circle cx="200" cy="295" r="1.5"/>
+  </g>
+</svg>
