@@ -116,14 +116,18 @@ impl Character {
 
     pub fn xp_to_next_level(&self) -> u32 { self.level * 100 }
 
-    pub fn add_xp(&mut self, amount: u32) -> Option<u32> {
+    /// Returns (new_level, loot_substance) on level up
+    pub fn add_xp(&mut self, amount: u32) -> Option<(u32, Substance)> {
         self.xp += amount;
         let needed = self.xp_to_next_level();
         if self.xp >= needed {
             self.xp -= needed; self.level += 1; self.skill_points += 1; self.updated_at = Utc::now();
             let vars = HashMap::from([("level".into(), self.level.to_string())]);
             self.journal.push(journal::generate_entry(self.genre, EntryType::LevelUp, &vars));
-            Some(self.level)
+            let thought_names: Vec<String> = self.thoughts.iter().map(|t| t.name.clone()).collect();
+            let loot = crate::substances::loot_drop(&thought_names);
+            *self.inventory.entry(loot).or_insert(0) += 1;
+            Some((self.level, loot))
         }
         else { self.updated_at = Utc::now(); None }
     }
@@ -165,6 +169,13 @@ impl Character {
     }
 
     pub fn use_substance(&mut self, substance: Substance) -> Result<String, String> {
+        // Check thought requirement
+        if let Some(required) = substance.required_thought() {
+            let has_thought = self.thoughts.iter().any(|t| t.name == required);
+            if !has_thought {
+                return Err(format!("You don't know about {} yet. You need to think deeper...", substance));
+            }
+        }
         let count = self.inventory.get(&substance).copied().unwrap_or(0);
         if count == 0 { return Err(format!("No {} in inventory.", substance)); }
         self.inventory.insert(substance, count - 1);
@@ -201,7 +212,8 @@ impl Character {
         self.updated_at = Utc::now();
     }
 
-    pub fn record_check(&mut self, record: CheckRecord) {
+    /// Returns (new_level, loot) if leveled up
+    pub fn record_check(&mut self, record: CheckRecord) -> Option<(u32, Substance)> {
         let xp = if record.success { 10 } else { 5 };
         let vars = HashMap::from([
             ("skill".into(), record.skill.to_string()),
@@ -237,7 +249,7 @@ impl Character {
         }
         self.check_history.push(record);
         self.tick_effects();
-        self.add_xp(xp);
+        self.add_xp(xp)
     }
 
     pub fn save(&self) -> Result<(), String> {

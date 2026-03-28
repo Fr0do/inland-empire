@@ -14,6 +14,8 @@ pub enum Substance {
     Speed,
     Nostalgia,
     Pyrholidon,
+    Lsd,
+    Mushrooms,
 }
 
 impl Substance {
@@ -25,7 +27,23 @@ impl Substance {
             Substance::Speed,
             Substance::Nostalgia,
             Substance::Pyrholidon,
+            Substance::Lsd,
+            Substance::Mushrooms,
         ]
+    }
+
+    /// Substances unlocked by default (no thought required)
+    pub fn basic() -> &'static [Substance] {
+        &[Substance::Coffee, Substance::Cigarette, Substance::Alcohol]
+    }
+
+    /// Returns the thought name required to unlock this substance, if any
+    pub fn required_thought(&self) -> Option<&'static str> {
+        match self {
+            Substance::Coffee | Substance::Cigarette | Substance::Alcohol => None,
+            Substance::Speed | Substance::Nostalgia => None,
+            Substance::Pyrholidon | Substance::Lsd | Substance::Mushrooms => Some("Расширение сознания"),
+        }
     }
 
     pub fn info(&self) -> &'static SubstanceInfo {
@@ -36,6 +54,8 @@ impl Substance {
             Substance::Speed => &SPEED_INFO,
             Substance::Nostalgia => &NOSTALGIA_INFO,
             Substance::Pyrholidon => &PYRHOLIDON_INFO,
+            Substance::Lsd => &LSD_INFO,
+            Substance::Mushrooms => &MUSHROOMS_INFO,
         }
     }
 
@@ -71,8 +91,10 @@ impl FromStr for Substance {
             "speed" | "amphetamine" | "amp" => Ok(Substance::Speed),
             "nostalgia" | "memory" => Ok(Substance::Nostalgia),
             "pyrholidon" | "pyro" | "pyr" => Ok(Substance::Pyrholidon),
+            "lsd" | "acid" | "кислота" => Ok(Substance::Lsd),
+            "mushrooms" | "shrooms" | "грибы" => Ok(Substance::Mushrooms),
             other => Err(format!(
-                "Unknown substance: '{other}'. Try: coffee, cigarette, alcohol, speed, nostalgia, pyrholidon"
+                "Unknown substance: '{other}'. Try: coffee, cigarette, alcohol, speed, nostalgia, pyrholidon, lsd, mushrooms"
             )),
         }
     }
@@ -163,6 +185,38 @@ static PYRHOLIDON_INFO: SubstanceInfo = SubstanceInfo {
     duration: 8,
 };
 
+static LSD_INFO: SubstanceInfo = SubstanceInfo {
+    name: "LSD",
+    description: "The code dissolves into fractals. Every function is a universe. You understand everything — or nothing.",
+    health_restore: 0,
+    morale_restore: 3,
+    skill_modifiers: &[
+        (Skill::Conceptualization, 3),
+        (Skill::InlandEmpire, 2),
+        (Skill::Shivers, 2),
+        (Skill::Logic, -2),
+        (Skill::HandEyeCoordination, -2),
+        (Skill::Composure, -1),
+    ],
+    duration: 12,
+};
+
+static MUSHROOMS_INFO: SubstanceInfo = SubstanceInfo {
+    name: "Mushrooms",
+    description: "The boundaries between you and the codebase dissolve. The functions breathe. The types have feelings.",
+    health_restore: 1,
+    morale_restore: 2,
+    skill_modifiers: &[
+        (Skill::Empathy, 3),
+        (Skill::InlandEmpire, 2),
+        (Skill::Conceptualization, 1),
+        (Skill::Volition, -2),
+        (Skill::Authority, -2),
+        (Skill::ReactionSpeed, -1),
+    ],
+    duration: 10,
+};
+
 // ── ActiveEffect ──────────────────────────────────────────────────────────────
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -204,6 +258,28 @@ pub fn starting_inventory() -> HashMap<Substance, u8> {
     inv.insert(Substance::Cigarette, 2);
     inv.insert(Substance::Alcohol, 1);
     inv
+}
+
+// ── Loot ─────────────────────────────────────────────────────────────────────
+
+/// Generate a random loot drop based on unlocked substances.
+/// `unlocked_thoughts` is a list of thought names the character has internalized.
+pub fn loot_drop(unlocked_thoughts: &[String]) -> Substance {
+    use rand::Rng;
+    let mut pool: Vec<Substance> = Vec::new();
+    for s in Substance::all() {
+        match s.required_thought() {
+            None => pool.push(*s),
+            Some(thought) => {
+                if unlocked_thoughts.iter().any(|t| t == thought) {
+                    pool.push(*s);
+                }
+            }
+        }
+    }
+    if pool.is_empty() { return Substance::Coffee; }
+    let idx = rand::rng().random_range(0..pool.len());
+    pool[idx]
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
