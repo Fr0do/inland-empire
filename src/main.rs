@@ -1,6 +1,8 @@
 mod character;
 mod checks;
+mod companions;
 mod display;
+mod equipment;
 mod journal;
 mod skills;
 mod substances;
@@ -59,6 +61,12 @@ enum Commands {
     Archetypes,
     /// Show skill list with descriptions
     Skills,
+    /// Show companion roster and model mappings
+    Companions {
+        /// Show which companion maps to this model hint (e.g. opus, sonnet, haiku)
+        #[arg(short, long)]
+        model: Option<String>,
+    },
 }
 
 #[derive(Subcommand)]
@@ -89,6 +97,7 @@ fn main() {
         Commands::Journal { action } => cmd_journal(action),
         Commands::Archetypes => cmd_archetypes(),
         Commands::Skills => cmd_skills(),
+        Commands::Companions { model } => cmd_companions(model.as_deref()),
     }
 }
 
@@ -316,4 +325,28 @@ fn cmd_archetypes() {
 fn cmd_skills() {
     println!("\nAll Skills:\n");
     for skill in Skill::all() { println!("  {:24} [{}] — {}", skill.to_string(), skill.attribute(), skill.claude_domain()); }
+}
+
+fn cmd_companions(model: Option<&str>) {
+    use colored::Colorize;
+    use companions::{companion_for_model, format_companion_line, Companion, CompanionAction};
+
+    if let Some(hint) = model {
+        let c = companion_for_model(hint);
+        let info = c.info();
+        println!("\n  Model hint '{}' → {}\n", hint, c);
+        println!("  {}  {}", info.name.bold(), info.title.dimmed());
+        println!("  {}", info.description.italic());
+        println!("\n  {}\n", format_companion_line(c, CompanionAction::Arrives));
+        return;
+    }
+
+    println!("\n{}\n", "COMPANIONS".bold());
+    for c in [Companion::Detective, Companion::Kim, Companion::Cuno] {
+        let info = c.info();
+        println!("  {}  —  {}", info.name.bold(), info.title.dimmed());
+        println!("  model: {}    {}", info.model.cyan(), info.description.italic());
+        println!("  {}", format_companion_line(c, CompanionAction::Observes));
+        println!();
+    }
 }
