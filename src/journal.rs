@@ -350,7 +350,7 @@ pub fn generate_entry(
     vars: &HashMap<String, String>,
 ) -> JournalEntry {
     let pool = templates(genre, entry_type);
-    let idx = rand::thread_rng().gen_range(0..pool.len());
+    let idx = rand::rng().random_range(0..pool.len());
     let content = apply_vars(pool[idx], vars);
     JournalEntry {
         timestamp: Utc::now(),

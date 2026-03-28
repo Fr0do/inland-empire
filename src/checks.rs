@@ -83,9 +83,9 @@ impl CheckResult {
 }
 
 pub fn roll_check(character: &Character, skill: Skill, threshold: u8, _context: &str, check_color: CheckColor, is_signature: bool) -> CheckResult {
-    let mut rng = rand::thread_rng();
-    let die1: u8 = rng.gen_range(1..=6);
-    let die2: u8 = rng.gen_range(1..=6);
+    let mut rng = rand::rng();
+    let die1: u8 = rng.random_range(1..=6);
+    let die2: u8 = rng.random_range(1..=6);
     let modifier = character.effective_skill(skill);
     let total = die1 as i8 + die2 as i8 + modifier;
     let critical_success = die1 == 6 && die2 == 6;
@@ -304,7 +304,7 @@ fn interjection_messages(skill: Skill) -> &'static [&'static str] {
 
 pub fn passive_interjections(character: &Character, tool: &str, context: &str) -> Vec<Interjection> {
     let primary = Skill::for_tool(tool);
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let _ = context;
     let mut results: Vec<Interjection> = Vec::new();
     for skill in Skill::all() {
@@ -312,9 +312,9 @@ pub fn passive_interjections(character: &Character, tool: &str, context: &str) -
         let effective = character.effective_skill(*skill);
         if effective <= 4 { continue; }
         let chance = (effective - 4) as f64 * 0.10;
-        if rng.gen::<f64>() >= chance { continue; }
+        if rng.random::<f64>() >= chance { continue; }
         let messages = interjection_messages(*skill);
-        let msg = messages[rng.gen_range(0..messages.len())];
+        let msg = messages[rng.random_range(0..messages.len())];
         results.push(Interjection { skill: *skill, message: msg.to_string() });
         if results.len() >= 3 { break; }
     }

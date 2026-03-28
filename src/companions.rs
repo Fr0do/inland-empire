@@ -151,7 +151,7 @@ pub fn companion_for_model(model_hint: &str) -> Companion {
 
 pub fn random_line(companion: Companion, action: CompanionAction) -> String {
     let lines = templates(companion, action);
-    let idx = rand::thread_rng().gen_range(0..lines.len());
+    let idx = rand::rng().random_range(0..lines.len());
     lines[idx].to_string()
 }
 

@@ -243,13 +243,26 @@ impl Character {
     pub fn save(&self) -> Result<(), String> {
         let path = profile_path(&self.name);
         if let Some(parent) = path.parent() { std::fs::create_dir_all(parent).map_err(|e| e.to_string())?; }
+        // Lock the file for writing
+        let lock_path = path.with_extension("lock");
+        let lock_file = std::fs::File::create(&lock_path).map_err(|e| e.to_string())?;
+        fs2::FileExt::lock_exclusive(&lock_file).map_err(|e| e.to_string())?;
+        // Atomic write: write to temp file, then rename
+        let tmp_path = path.with_extension("tmp");
         let json = serde_json::to_string_pretty(self).map_err(|e| e.to_string())?;
-        std::fs::write(&path, json).map_err(|e| e.to_string())?;
+        std::fs::write(&tmp_path, &json).map_err(|e| e.to_string())?;
+        std::fs::rename(&tmp_path, &path).map_err(|e| e.to_string())?;
+        // Unlock
+        fs2::FileExt::unlock(&lock_file).map_err(|e| e.to_string())?;
         Ok(())
     }
 
     pub fn load(name: &str) -> Result<Self, String> {
         let path = profile_path(name);
+        let lock_path = path.with_extension("lock");
+        if let Ok(lock_file) = std::fs::File::create(&lock_path) {
+            let _ = fs2::FileExt::lock_shared(&lock_file);
+        }
         let data = std::fs::read_to_string(&path).map_err(|_| format!("Character '{}' not found at {}", name, path.display()))?;
         let mut ch: Self = serde_json::from_str(&data).map_err(|e| e.to_string())?;
         // Migration: grant starting inventory to pre-substance characters
