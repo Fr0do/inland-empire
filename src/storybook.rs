@@ -216,6 +216,8 @@ fn entry_type_css_class(et: EntryType) -> &'static str {
         EntryType::SubstanceUsed => "entry-substance",
         EntryType::Rest => "entry-rest",
         EntryType::Manual => "entry-manual",
+        EntryType::CheckPass => "entry-check-pass",
+        EntryType::CheckFail => "entry-check-fail",
     }
 }
 

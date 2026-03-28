@@ -207,10 +207,33 @@ impl Character {
             ("skill".into(), record.skill.to_string()),
             ("context".into(), record.context.clone()),
         ]);
+        let details = journal::CheckDetails {
+            skill: record.skill.to_string(),
+            roll: record.roll,
+            modifier: record.modifier,
+            total: record.total,
+            threshold: record.difficulty,
+            check_color: record.check_color.label().to_string(),
+            tool: record.context.split_whitespace().next().unwrap_or("unknown").to_string(),
+            context: record.context.clone(),
+            success: record.success,
+        };
         if record.roll.0 == 6 && record.roll.1 == 6 {
-            self.journal.push(journal::generate_entry(self.genre, EntryType::CriticalSuccess, &vars));
+            self.journal.push(journal::generate_check_entry(self.genre, EntryType::CriticalSuccess, &vars, details));
         } else if record.roll.0 == 1 && record.roll.1 == 1 {
-            self.journal.push(journal::generate_entry(self.genre, EntryType::CriticalFailure, &vars));
+            self.journal.push(journal::generate_check_entry(self.genre, EntryType::CriticalFailure, &vars, details));
+        } else {
+            let entry = journal::JournalEntry {
+                timestamp: chrono::Utc::now(),
+                entry_type: if record.success { EntryType::CheckPass } else { EntryType::CheckFail },
+                content: if record.success {
+                    format!("{} held on {}.", record.skill, record.context)
+                } else {
+                    format!("{} faltered on {}.", record.skill, record.context)
+                },
+                details: Some(details),
+            };
+            self.journal.push(entry);
         }
         self.check_history.push(record);
         self.tick_effects();

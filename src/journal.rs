@@ -66,6 +66,8 @@ impl FromStr for Genre {
 pub enum EntryType {
     CriticalSuccess,
     CriticalFailure,
+    CheckPass,
+    CheckFail,
     GameOver,
     LevelUp,
     ThoughtInternalized,
@@ -79,6 +81,8 @@ impl fmt::Display for EntryType {
         match self {
             EntryType::CriticalSuccess => write!(f, "CRITICAL SUCCESS"),
             EntryType::CriticalFailure => write!(f, "CRITICAL FAILURE"),
+            EntryType::CheckPass => write!(f, "CHECK"),
+            EntryType::CheckFail => write!(f, "CHECK"),
             EntryType::GameOver => write!(f, "GAME OVER"),
             EntryType::LevelUp => write!(f, "LEVEL UP"),
             EntryType::ThoughtInternalized => write!(f, "THOUGHT"),
@@ -96,12 +100,30 @@ pub struct JournalEntry {
     pub timestamp: DateTime<Utc>,
     pub entry_type: EntryType,
     pub content: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub details: Option<CheckDetails>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CheckDetails {
+    pub skill: String,
+    pub roll: (u8, u8),
+    pub modifier: i8,
+    pub total: i8,
+    pub threshold: u8,
+    pub check_color: String,
+    pub tool: String,
+    pub context: String,
+    pub success: bool,
 }
 
 // ── Template system ───────────────────────────────────────────────────────────
 
 fn templates(genre: Genre, entry_type: EntryType) -> &'static [&'static str] {
     match (genre, entry_type) {
+        // CheckPass/CheckFail don't use genre templates — content is set directly
+        (_, EntryType::CheckPass) => &["{content}"],
+        (_, EntryType::CheckFail) => &["{content}"],
         // ── NOIR ──────────────────────────────────────────────────────────────
         (Genre::Noir, EntryType::CriticalSuccess) => &[
             "The dice finally fell my way. {skill} came through on {context}. Case breaks wide open.",
@@ -334,12 +356,24 @@ pub fn generate_entry(
         timestamp: Utc::now(),
         entry_type,
         content,
+        details: None,
     }
+}
+
+pub fn generate_check_entry(
+    genre: Genre,
+    entry_type: EntryType,
+    vars: &HashMap<String, String>,
+    details: CheckDetails,
+) -> JournalEntry {
+    let mut entry = generate_entry(genre, entry_type, vars);
+    entry.details = Some(details);
+    entry
 }
 
 // ── Display ───────────────────────────────────────────────────────────────────
 
-pub fn format_journal(entries: &[JournalEntry], limit: usize) -> String {
+pub fn format_journal(entries: &[JournalEntry], limit: usize, verbose: bool) -> String {
     let mut lines = Vec::new();
 
     let slice: Vec<&JournalEntry> = entries.iter().rev().take(limit).collect();
@@ -349,8 +383,10 @@ pub fn format_journal(entries: &[JournalEntry], limit: usize) -> String {
         let ts_str = ts.dimmed().to_string();
 
         let tag_str = match entry.entry_type {
-            EntryType::CriticalSuccess => format!("[{}]", entry.entry_type).green().to_string(),
-            EntryType::CriticalFailure => format!("[{}]", entry.entry_type).red().to_string(),
+            EntryType::CriticalSuccess => format!("[{}]", entry.entry_type).green().bold().to_string(),
+            EntryType::CriticalFailure => format!("[{}]", entry.entry_type).red().bold().to_string(),
+            EntryType::CheckPass => format!("[{}]", "PASS").green().to_string(),
+            EntryType::CheckFail => format!("[{}]", "FAIL").red().to_string(),
             EntryType::GameOver => format!("[{}]", entry.entry_type).red().bold().to_string(),
             EntryType::LevelUp => format!("[{}]", entry.entry_type).yellow().to_string(),
             EntryType::ThoughtInternalized => format!("[{}]", entry.entry_type).cyan().to_string(),
@@ -361,6 +397,13 @@ pub fn format_journal(entries: &[JournalEntry], limit: usize) -> String {
 
         lines.push(format!("{} {}", ts_str, tag_str));
         lines.push(format!("  {}", entry.content.italic()));
+        if verbose {
+            if let Some(ref d) = entry.details {
+                let roll_str = format!("{}+{}+{}={} vs DC{}", d.roll.0, d.roll.1, d.modifier, d.total, d.threshold);
+                let result = if d.success { "pass".green().to_string() } else { "fail".red().to_string() };
+                lines.push(format!("  {} {} | {} | {} → {}", "▸".dimmed(), d.skill.dimmed(), d.tool.dimmed(), roll_str.dimmed(), result));
+            }
+        }
         lines.push(String::new());
     }
 

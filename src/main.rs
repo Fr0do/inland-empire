@@ -56,6 +56,9 @@ enum Commands {
     Rest,
     /// Journal: view, write, or change genre
     Journal {
+        /// Show check details (rolls, modifiers, DCs)
+        #[arg(short, long)]
+        verbose: bool,
         #[command(subcommand)]
         action: Option<JournalAction>,
     },
@@ -109,7 +112,7 @@ fn main() {
         Commands::Use { substance } => cmd_use(&substance),
         Commands::Inventory => cmd_inventory(),
         Commands::Rest => cmd_rest(),
-        Commands::Journal { action } => cmd_journal(action),
+        Commands::Journal { verbose, action } => cmd_journal(action, verbose),
         Commands::Equip { item } => cmd_equip(&item),
         Commands::Unequip { slot } => cmd_unequip(&slot),
         Commands::Catalog => cmd_catalog(),
@@ -301,14 +304,14 @@ fn cmd_rest() {
     println!();
 }
 
-fn cmd_journal(action: Option<JournalAction>) {
+fn cmd_journal(action: Option<JournalAction>, verbose: bool) {
     let mut ch = match Character::load_active() { Ok(c) => c, Err(e) => { eprintln!("{}", e); return; } };
     match action {
         None => {
             use colored::Colorize;
             if ch.journal.is_empty() { println!("\n{}\n  {}\n", "JOURNAL".bold(), "(no entries yet)".dimmed()); return; }
-            println!("\n{} ({})\n", "JOURNAL".bold(), ch.genre.to_string().dimmed());
-            println!("{}", journal::format_journal(&ch.journal, 10));
+            println!("\n{} ({}){}\n", "JOURNAL".bold(), ch.genre.to_string().dimmed(), if verbose { " [verbose]" } else { "" });
+            println!("{}", journal::format_journal(&ch.journal, 10, verbose));
             println!();
         }
         Some(JournalAction::Write { text }) => {
@@ -325,8 +328,8 @@ fn cmd_journal(action: Option<JournalAction>) {
         Some(JournalAction::Full) => {
             use colored::Colorize;
             if ch.journal.is_empty() { println!("\n{}\n  {}\n", "JOURNAL".bold(), "(no entries yet)".dimmed()); return; }
-            println!("\n{} ({})\n", "JOURNAL".bold(), ch.genre.to_string().dimmed());
-            println!("{}", journal::format_journal(&ch.journal, ch.journal.len()));
+            println!("\n{} ({}){}\n", "JOURNAL".bold(), ch.genre.to_string().dimmed(), if verbose { " [verbose]" } else { "" });
+            println!("{}", journal::format_journal(&ch.journal, ch.journal.len(), verbose));
             println!();
         }
     }
