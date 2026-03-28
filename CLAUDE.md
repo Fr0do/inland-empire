@@ -50,3 +50,11 @@ src/
 - **Signature Skill**: `ie new "Name" -s logic` — +1 permanent bonus, unique flavor text
 - **Day/Night Cycle**: time-of-day modifiers (Night: +1 Shivers/InlandEmpire, Morning: +1 Volition/Logic)
 - **Passive Interjections**: high skills "speak up" automatically before checks
+
+## RTK Integration
+RTK (Rust Token Killer) for token-optimized CLI. Prefix verbose commands:
+```bash
+rtk cargo build        # filtered build output
+rtk cargo test         # filtered test output
+rtk git status         # compact git output
+```

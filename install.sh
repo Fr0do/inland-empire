@@ -11,6 +11,13 @@ echo "Building ie binary..."
 cargo install --path .
 echo "✓ ie binary installed"
 
+# Check for RTK
+if command -v rtk &> /dev/null; then
+    echo "✓ RTK detected ($(rtk --version))"
+else
+    echo "⚠ RTK not found. Install for token savings: cargo install rtk-cli"
+fi
+
 # Install hook
 HOOK_DIR="$HOME/.claude/hooks"
 mkdir -p "$HOOK_DIR"

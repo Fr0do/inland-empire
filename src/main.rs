@@ -1,6 +1,7 @@
 mod character;
 mod checks;
 mod companions;
+mod copotype;
 mod display;
 mod equipment;
 mod journal;
@@ -91,6 +92,8 @@ enum Commands {
         #[arg(long)]
         compact: bool,
     },
+    /// Show your coding personality type based on skill distribution
+    Copotype,
     /// Export journal as HTML storybook
     #[command(name = "storybook")]
     Storybook {
@@ -134,6 +137,7 @@ fn main() {
         Commands::Skills => cmd_skills(),
         Commands::Companions { model } => cmd_companions(model.as_deref()),
         Commands::Portrait { compact } => cmd_portrait(compact),
+        Commands::Copotype => cmd_copotype(),
         Commands::Storybook { output } => cmd_storybook(output),
     }
 }
@@ -153,6 +157,20 @@ fn cmd_status(art: bool) {
         Ok(ch) => {
             if art { print!("{}", portrait::render_character(&ch)); }
             println!("{}", display::character_sheet(&ch));
+            let ct = copotype::detect_copotype(&ch);
+            let info = ct.info();
+            use colored::Colorize;
+            println!("  Copotype  {} — {}", info.name.cyan().bold(), info.title.dimmed());
+        }
+        Err(e) => eprintln!("{}", e),
+    }
+}
+
+fn cmd_copotype() {
+    match Character::load_active() {
+        Ok(ch) => {
+            let ct = copotype::detect_copotype(&ch);
+            print!("{}", copotype::format_copotype(ct, &ch));
         }
         Err(e) => eprintln!("{}", e),
     }
@@ -283,10 +301,12 @@ fn cmd_hook_check(tool: &str, context: &str) {
     let skill = Skill::for_tool(tool);
     let threshold = Difficulty::for_action(tool, context).threshold();
 
-    // Fast path: auto-pass trivial checks for skilled characters (no XP, no journal entry)
+    // Fast path: auto-pass trivial checks for skilled characters (small XP, no journal entry)
     if threshold <= 6 {
         let effective = ch.effective_skill(skill);
         if effective >= 4 {
+            // Small XP for exploration (no dice, no journal)
+            ch.add_xp(2);  // 2 XP per exploration action (vs 10/5 for real checks)
             let json = serde_json::json!({
                 "allow": true,
                 "skill": skill.to_string(),
@@ -299,9 +319,10 @@ fn cmd_hook_check(tool: &str, context: &str) {
                 "check_color": "White",
                 "game_over": false,
                 "retryable": false,
-                "reason": format!("{} auto-pass (trivial)", skill)
+                "reason": format!("{} auto-pass (trivial, +2xp)", skill)
             });
             println!("{}", json);
+            ch.save().ok();
             return;
         }
     }
