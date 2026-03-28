@@ -1,12 +1,16 @@
 mod character;
 mod checks;
 mod display;
+mod journal;
 mod skills;
+mod substances;
 mod time;
 mod types;
 
 use character::{list_profiles, Character, Thought, ARCHETYPES};
 use checks::{passive_interjections, perform_check, Difficulty};
+use journal::Genre;
+use substances::Substance;
 use types::CheckColor;
 use clap::{Parser, Subcommand};
 use skills::Skill;
@@ -40,10 +44,31 @@ enum Commands {
     /// Hook mode: check a tool action, output JSON for Claude hooks
     #[command(name = "hook-check")]
     HookCheck { tool: String, #[arg(short, long, default_value = "")] context: String },
+    /// Use a substance from inventory
+    Use { substance: String },
+    /// Show inventory and active effects
+    Inventory,
+    /// Rest: full heal, clear substance effects
+    Rest,
+    /// Journal: view, write, or change genre
+    Journal {
+        #[command(subcommand)]
+        action: Option<JournalAction>,
+    },
     /// List available archetypes
     Archetypes,
     /// Show skill list with descriptions
     Skills,
+}
+
+#[derive(Subcommand)]
+enum JournalAction {
+    /// Write a manual journal entry
+    Write { text: String },
+    /// Change journal genre
+    Genre { genre: String },
+    /// Show all journal entries
+    Full,
 }
 
 fn main() {
@@ -58,6 +83,10 @@ fn main() {
         Commands::Develop { skill } => cmd_develop(&skill),
         Commands::Think { name, description, modifiers } => cmd_think(&name, &description, &modifiers),
         Commands::HookCheck { tool, context } => cmd_hook_check(&tool, &context),
+        Commands::Use { substance } => cmd_use(&substance),
+        Commands::Inventory => cmd_inventory(),
+        Commands::Rest => cmd_rest(),
+        Commands::Journal { action } => cmd_journal(action),
         Commands::Archetypes => cmd_archetypes(),
         Commands::Skills => cmd_skills(),
     }
@@ -189,6 +218,90 @@ fn cmd_hook_check(tool: &str, context: &str) {
     });
     println!("{}", json);
     ch.save().ok();
+}
+
+fn cmd_use(substance_str: &str) {
+    let mut ch = match Character::load_active() { Ok(c) => c, Err(e) => { eprintln!("{}", e); return; } };
+    let substance: Substance = substance_str.parse().unwrap_or_else(|e| { eprintln!("{}", e); std::process::exit(1); });
+    match ch.use_substance(substance) {
+        Ok(desc) => {
+            use colored::Colorize;
+            println!("\n{} {}", substance.to_string().magenta().bold(), desc.italic());
+            let info = substance.info();
+            if info.health_restore > 0 { println!("  {} +{}", "Health".red(), info.health_restore); }
+            if info.morale_restore > 0 { println!("  {} +{}", "Morale".magenta(), info.morale_restore); }
+            for (skill, val) in info.skill_modifiers {
+                if *val > 0 { println!("  {} +{} ({} checks)", skill, val, info.duration); }
+                else { println!("  {} {} ({} checks)", skill, val, info.duration); }
+            }
+            println!();
+        }
+        Err(e) => eprintln!("{}", e),
+    }
+    ch.save().expect("Failed to save");
+}
+
+fn cmd_inventory() {
+    let ch = match Character::load_active() { Ok(c) => c, Err(e) => { eprintln!("{}", e); return; } };
+    use colored::Colorize;
+    println!("\n{}", "INVENTORY".bold());
+    let mut any = false;
+    for substance in Substance::all() {
+        if let Some(&count) = ch.inventory.get(substance) {
+            if count > 0 { println!("  {} x{} — {}", substance, count, substance.info().description.dimmed()); any = true; }
+        }
+    }
+    if !any { println!("  {}", "(empty)".dimmed()); }
+    if !ch.active_effects.is_empty() {
+        println!("\n{}", "ACTIVE EFFECTS".bold());
+        for effect in &ch.active_effects {
+            let mods: Vec<String> = effect.skill_modifiers.iter().map(|(s, v)| if *v >= 0 { format!("{} +{}", s, v).green().to_string() } else { format!("{} {}", s, v).red().to_string() }).collect();
+            println!("  {} ({} checks left)  {}", effect.substance.to_string().magenta(), effect.checks_remaining, mods.join(", "));
+        }
+    }
+    println!();
+}
+
+fn cmd_rest() {
+    let mut ch = match Character::load_active() { Ok(c) => c, Err(e) => { eprintln!("{}", e); return; } };
+    ch.rest();
+    ch.save().expect("Failed to save");
+    use colored::Colorize;
+    println!("\n{}", "REST".bold());
+    println!("  Health: {}/{}  Morale: {}/{}", ch.health, ch.max_health, ch.morale, ch.max_morale);
+    println!("  {}", "All effects cleared. Ready for a new day.".dimmed());
+    println!();
+}
+
+fn cmd_journal(action: Option<JournalAction>) {
+    let mut ch = match Character::load_active() { Ok(c) => c, Err(e) => { eprintln!("{}", e); return; } };
+    match action {
+        None => {
+            use colored::Colorize;
+            if ch.journal.is_empty() { println!("\n{}\n  {}\n", "JOURNAL".bold(), "(no entries yet)".dimmed()); return; }
+            println!("\n{} ({})\n", "JOURNAL".bold(), ch.genre.to_string().dimmed());
+            println!("{}", journal::format_journal(&ch.journal, 10));
+            println!();
+        }
+        Some(JournalAction::Write { text }) => {
+            ch.add_journal_entry(text);
+            ch.save().expect("Failed to save");
+            println!("Entry added.");
+        }
+        Some(JournalAction::Genre { genre }) => {
+            let g: Genre = genre.parse().unwrap_or_else(|e| { eprintln!("{}", e); std::process::exit(1); });
+            ch.genre = g;
+            ch.save().expect("Failed to save");
+            println!("Journal genre set to {}.", g);
+        }
+        Some(JournalAction::Full) => {
+            use colored::Colorize;
+            if ch.journal.is_empty() { println!("\n{}\n  {}\n", "JOURNAL".bold(), "(no entries yet)".dimmed()); return; }
+            println!("\n{} ({})\n", "JOURNAL".bold(), ch.genre.to_string().dimmed());
+            println!("{}", journal::format_journal(&ch.journal, ch.journal.len()));
+            println!();
+        }
+    }
 }
 
 fn cmd_archetypes() {

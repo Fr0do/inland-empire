@@ -1,5 +1,6 @@
 use crate::character::Character;
 use crate::skills::{Attribute, Skill};
+use crate::substances::Substance;
 use crate::time::TimeOfDay;
 use colored::Colorize;
 
@@ -37,6 +38,23 @@ pub fn character_sheet(ch: &Character) -> String {
                 };
                 let prefix = if ch.signature_skill == Some(*skill) { "★ " } else { "  " };
                 out.push_str(&format!("{}{:24} {:>2}{}  {}\n", prefix, skill.to_string(), effective, bonus, bar_colored));
+            }
+        }
+    }
+    if !ch.active_effects.is_empty() {
+        out.push_str(&format!("\n{}\n", "ACTIVE EFFECTS".bold()));
+        for effect in &ch.active_effects {
+            let mods: Vec<String> = effect.skill_modifiers.iter().map(|(s, v)| if *v >= 0 { format!("{} +{}", s, v).green().to_string() } else { format!("{} {}", s, v).red().to_string() }).collect();
+            out.push_str(&format!("  {} ({} checks left)  {}\n", effect.substance.to_string().magenta(), effect.checks_remaining, mods.join(", ")));
+        }
+    }
+    if !ch.inventory.is_empty() {
+        out.push_str(&format!("\n{}\n", "INVENTORY".bold()));
+        for substance in Substance::all() {
+            if let Some(&count) = ch.inventory.get(substance) {
+                if count > 0 {
+                    out.push_str(&format!("  {} x{} — {}\n", substance, count, substance.info().description.dimmed()));
+                }
             }
         }
     }

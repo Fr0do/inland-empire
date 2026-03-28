@@ -1,4 +1,6 @@
+use crate::journal::{self, EntryType, Genre, JournalEntry};
 use crate::skills::{Attribute, Skill};
+use crate::substances::{ActiveEffect, Substance, starting_inventory};
 use crate::time::TimeOfDay;
 use crate::types::CheckColor;
 use chrono::{DateTime, Utc};
@@ -32,6 +34,14 @@ pub struct Character {
     pub morale: u8,
     #[serde(default = "default_morale")]
     pub max_morale: u8,
+    #[serde(default)]
+    pub inventory: HashMap<Substance, u8>,
+    #[serde(default)]
+    pub active_effects: Vec<ActiveEffect>,
+    #[serde(default)]
+    pub journal: Vec<JournalEntry>,
+    #[serde(default)]
+    pub genre: Genre,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -88,7 +98,7 @@ impl Character {
         let max_health = (physique * 2).max(2);
         let max_morale = (psyche * 2).max(2);
         let now = Utc::now();
-        Character { name, archetype: arch.name.to_string(), level: 1, xp: 0, skill_points: 0, skills, attributes, thoughts: Vec::new(), check_history: Vec::new(), signature_skill: signature, created_at: now, updated_at: now, health: max_health, max_health, morale: max_morale, max_morale }
+        Character { name, archetype: arch.name.to_string(), level: 1, xp: 0, skill_points: 0, skills, attributes, thoughts: Vec::new(), check_history: Vec::new(), signature_skill: signature, created_at: now, updated_at: now, health: max_health, max_health, morale: max_morale, max_morale, inventory: starting_inventory(), active_effects: Vec::new(), journal: Vec::new(), genre: Genre::default() }
     }
 
     pub fn effective_skill(&self, skill: Skill) -> i8 {
@@ -96,7 +106,8 @@ impl Character {
         let thought_bonus: i8 = self.thoughts.iter().filter(|t| t.internalized).filter_map(|t| t.skill_modifiers.get(&skill)).sum();
         let signature_bonus: i8 = if self.signature_skill == Some(skill) { 1 } else { 0 };
         let time_bonus = TimeOfDay::current().modifiers().get(&skill).copied().unwrap_or(0) as i8;
-        base + thought_bonus + signature_bonus + time_bonus
+        let substance_bonus: i8 = self.active_effects.iter().filter_map(|e| e.skill_modifiers.get(&skill)).sum();
+        base + thought_bonus + signature_bonus + time_bonus + substance_bonus
     }
 
     pub fn xp_to_next_level(&self) -> u32 { self.level * 100 }
@@ -104,7 +115,12 @@ impl Character {
     pub fn add_xp(&mut self, amount: u32) -> Option<u32> {
         self.xp += amount;
         let needed = self.xp_to_next_level();
-        if self.xp >= needed { self.xp -= needed; self.level += 1; self.skill_points += 1; self.updated_at = Utc::now(); Some(self.level) }
+        if self.xp >= needed {
+            self.xp -= needed; self.level += 1; self.skill_points += 1; self.updated_at = Utc::now();
+            let vars = HashMap::from([("level".into(), self.level.to_string())]);
+            self.journal.push(journal::generate_entry(self.genre, EntryType::LevelUp, &vars));
+            Some(self.level)
+        }
         else { self.updated_at = Utc::now(); None }
     }
 
@@ -136,11 +152,64 @@ impl Character {
     pub fn restore_morale(&mut self, amount: u8) { self.morale = (self.morale + amount).min(self.max_morale); }
     pub fn is_dead(&self) -> bool { self.health == 0 || self.morale == 0 }
 
-    pub fn internalize_thought(&mut self, thought: Thought) { self.thoughts.push(thought); self.updated_at = Utc::now(); }
+    pub fn internalize_thought(&mut self, thought: Thought) {
+        let vars = HashMap::from([("thought".into(), thought.name.clone())]);
+        let entry = journal::generate_entry(self.genre, EntryType::ThoughtInternalized, &vars);
+        self.journal.push(entry);
+        self.thoughts.push(thought);
+        self.updated_at = Utc::now();
+    }
+
+    pub fn use_substance(&mut self, substance: Substance) -> Result<String, String> {
+        let count = self.inventory.get(&substance).copied().unwrap_or(0);
+        if count == 0 { return Err(format!("No {} in inventory.", substance)); }
+        self.inventory.insert(substance, count - 1);
+        if count - 1 == 0 { self.inventory.remove(&substance); }
+        let info = substance.info();
+        if info.health_restore > 0 { self.heal(info.health_restore as u8); }
+        if info.morale_restore > 0 { self.restore_morale(info.morale_restore as u8); }
+        self.active_effects.push(substance.to_active_effect());
+        let vars = HashMap::from([("substance".into(), substance.to_string())]);
+        let entry = journal::generate_entry(self.genre, EntryType::SubstanceUsed, &vars);
+        self.journal.push(entry);
+        self.updated_at = Utc::now();
+        Ok(info.description.to_string())
+    }
+
+    pub fn tick_effects(&mut self) {
+        for effect in &mut self.active_effects { effect.tick(); }
+        self.active_effects.retain(|e| !e.is_expired());
+    }
+
+    pub fn rest(&mut self) {
+        self.health = self.max_health;
+        self.morale = self.max_morale;
+        self.active_effects.clear();
+        let entry = journal::generate_entry(self.genre, EntryType::Rest, &HashMap::new());
+        self.journal.push(entry);
+        self.updated_at = Utc::now();
+    }
+
+    pub fn add_journal_entry(&mut self, content: String) {
+        let vars = HashMap::from([("content".into(), content)]);
+        let entry = journal::generate_entry(self.genre, EntryType::Manual, &vars);
+        self.journal.push(entry);
+        self.updated_at = Utc::now();
+    }
 
     pub fn record_check(&mut self, record: CheckRecord) {
         let xp = if record.success { 10 } else { 5 };
+        let vars = HashMap::from([
+            ("skill".into(), record.skill.to_string()),
+            ("context".into(), record.context.clone()),
+        ]);
+        if record.roll.0 == 6 && record.roll.1 == 6 {
+            self.journal.push(journal::generate_entry(self.genre, EntryType::CriticalSuccess, &vars));
+        } else if record.roll.0 == 1 && record.roll.1 == 1 {
+            self.journal.push(journal::generate_entry(self.genre, EntryType::CriticalFailure, &vars));
+        }
         self.check_history.push(record);
+        self.tick_effects();
         self.add_xp(xp);
     }
 
@@ -155,7 +224,23 @@ impl Character {
     pub fn load(name: &str) -> Result<Self, String> {
         let path = profile_path(name);
         let data = std::fs::read_to_string(&path).map_err(|_| format!("Character '{}' not found at {}", name, path.display()))?;
-        serde_json::from_str(&data).map_err(|e| e.to_string())
+        let mut ch: Self = serde_json::from_str(&data).map_err(|e| e.to_string())?;
+        // Migration: grant starting inventory to pre-substance characters
+        if ch.inventory.is_empty() {
+            ch.inventory = starting_inventory();
+        }
+        // Migration: initialize health/morale for pre-health characters
+        if ch.max_health == 0 {
+            let physique = ch.attributes.get(&Attribute::Physique).copied().unwrap_or(1);
+            ch.max_health = (physique * 2).max(2);
+            ch.health = ch.max_health;
+        }
+        if ch.max_morale == 0 {
+            let psyche = ch.attributes.get(&Attribute::Psyche).copied().unwrap_or(1);
+            ch.max_morale = (psyche * 2).max(2);
+            ch.morale = ch.max_morale;
+        }
+        Ok(ch)
     }
 
     pub fn load_active() -> Result<Self, String> {

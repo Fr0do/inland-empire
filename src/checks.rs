@@ -1,9 +1,11 @@
 use crate::character::{Character, CheckRecord};
+use crate::journal::{self, EntryType};
 use crate::skills::{Attribute, Skill};
 use crate::types::CheckColor;
 use chrono::Utc;
 use colored::Colorize;
 use rand::Rng;
+use std::collections::HashMap;
 
 #[derive(Debug, Clone, Copy)]
 pub enum Difficulty {
@@ -52,7 +54,13 @@ impl CheckResult {
         let difficulty = Difficulty::from_threshold(self.threshold);
         let mod_str = if self.modifier >= 0 { format!("+{}", self.modifier) } else { format!("{}", self.modifier) };
         let color_tag = match self.check_color { CheckColor::White => "○".dimmed().to_string(), CheckColor::Red => "●".red().to_string() };
-        let header = format!("{} {} [{}] — {} check (DC {})", color_tag, skill_name, attr, difficulty.label(), self.threshold);
+        let colored_skill = match attr {
+            Attribute::Intellect => skill_name.blue().bold().to_string(),
+            Attribute::Psyche => skill_name.magenta().bold().to_string(),
+            Attribute::Physique => skill_name.red().bold().to_string(),
+            Attribute::Motorics => skill_name.yellow().bold().to_string(),
+        };
+        let header = format!("{} {} [{}] — {} check (DC {})", color_tag, colored_skill, attr, difficulty.label(), self.threshold);
         let dice_line = format!("  {} + {} {} = {}  vs  {}", self.die1, self.die2, mod_str, self.total, self.threshold);
         let result_line = if self.critical_success { "  CRITICAL SUCCESS".green().bold().to_string() }
             else if self.critical_failure { "  CRITICAL FAILURE".red().bold().to_string() }
@@ -96,7 +104,11 @@ pub fn perform_check(character: &mut Character, skill: Skill, threshold: u8, con
             Attribute::Physique | Attribute::Motorics => character.take_physical_damage(1),
             Attribute::Intellect | Attribute::Psyche => character.take_morale_damage(1),
         };
-        if dead || character.is_dead() { result.game_over = true; }
+        if dead || character.is_dead() {
+            result.game_over = true;
+            let entry = journal::generate_entry(character.genre, EntryType::GameOver, &HashMap::new());
+            character.journal.push(entry);
+        }
     }
     result
 }
