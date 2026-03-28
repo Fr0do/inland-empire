@@ -2,9 +2,12 @@ mod character;
 mod checks;
 mod display;
 mod skills;
+mod time;
+mod types;
 
 use character::{list_profiles, Character, Thought, ARCHETYPES};
-use checks::{perform_check, Difficulty};
+use checks::{passive_interjections, perform_check, Difficulty};
+use types::CheckColor;
 use clap::{Parser, Subcommand};
 use skills::Skill;
 use std::collections::HashMap;
@@ -19,7 +22,7 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     /// Create a new character profile
-    New { name: String, #[arg(short, long, default_value = "generalist")] archetype: String },
+    New { name: String, #[arg(short, long, default_value = "generalist")] archetype: String, #[arg(short='s', long)] signature: Option<String> },
     /// Show character sheet
     Status,
     /// List all saved profiles
@@ -32,6 +35,8 @@ enum Commands {
     Develop { skill: String },
     /// Add a thought to the thought cabinet
     Think { name: String, #[arg(short, long, default_value = "")] description: String, #[arg(short, long, default_value = "")] modifiers: String },
+    /// Retry last failed white check for a skill
+    Retry { skill: String },
     /// Hook mode: check a tool action, output JSON for Claude hooks
     #[command(name = "hook-check")]
     HookCheck { tool: String, #[arg(short, long, default_value = "")] context: String },
@@ -44,11 +49,12 @@ enum Commands {
 fn main() {
     let cli = Cli::parse();
     match cli.command {
-        Commands::New { name, archetype } => cmd_new(&name, &archetype),
+        Commands::New { name, archetype, signature } => cmd_new(&name, &archetype, signature.as_deref()),
         Commands::Status => cmd_status(),
         Commands::Profiles => cmd_profiles(),
         Commands::Switch { name } => cmd_switch(&name),
         Commands::Check { tool, context, difficulty, skill } => cmd_check(&tool, &context, difficulty, skill.as_deref()),
+        Commands::Retry { skill } => cmd_retry(&skill),
         Commands::Develop { skill } => cmd_develop(&skill),
         Commands::Think { name, description, modifiers } => cmd_think(&name, &description, &modifiers),
         Commands::HookCheck { tool, context } => cmd_hook_check(&tool, &context),
@@ -57,11 +63,13 @@ fn main() {
     }
 }
 
-fn cmd_new(name: &str, archetype: &str) {
-    let ch = Character::new(name.to_string(), archetype);
+fn cmd_new(name: &str, archetype: &str, signature: Option<&str>) {
+    let sig = signature.map(|s| s.parse::<Skill>().unwrap_or_else(|e| { eprintln!("{}", e); std::process::exit(1); }));
+    let ch = Character::new(name.to_string(), archetype, sig);
     ch.save().expect("Failed to save character");
     ch.set_active().expect("Failed to set active");
     println!("{}", display::character_sheet(&ch));
+    if let Some(s) = sig { println!("★ Signature Skill: {}", s); }
     println!("Character '{}' created and set as active.", name);
 }
 
@@ -90,9 +98,30 @@ fn cmd_check(tool: &str, context: &str, difficulty: Option<u8>, skill_override: 
     let mut ch = match Character::load_active() { Ok(c) => c, Err(e) => { eprintln!("{}", e); return; } };
     let skill = if let Some(s) = skill_override { s.parse::<Skill>().unwrap_or_else(|e| { eprintln!("{}", e); std::process::exit(1); }) } else { Skill::for_tool(tool) };
     let threshold = difficulty.unwrap_or_else(|| Difficulty::for_action(tool, context).threshold());
+    let color = CheckColor::for_action(tool, context);
     let ctx = if context.is_empty() { format!("{} action", tool) } else { context.to_string() };
-    let result = perform_check(&mut ch, skill, threshold, &ctx);
+    for ij in passive_interjections(&ch, tool, &ctx) { println!("{}", ij.format_de_style()); }
+    let is_signature = ch.signature_skill == Some(skill);
+    let result = perform_check(&mut ch, skill, threshold, &ctx, color, is_signature);
     println!("{}", result.format_de_style(&ctx));
+    ch.save().expect("Failed to save character");
+}
+
+fn cmd_retry(skill_str: &str) {
+    let mut ch = match Character::load_active() { Ok(c) => c, Err(e) => { eprintln!("{}", e); return; } };
+    let skill: Skill = skill_str.parse().unwrap_or_else(|e| { eprintln!("{}", e); std::process::exit(1); });
+    let (threshold, context, old_level) = match ch.last_failed_white_check(skill) {
+        Some(r) => (r.difficulty, r.context.clone(), r.skill_level_at_check),
+        None => { eprintln!("No failed white check found for {}", skill); return; }
+    };
+    let current_level = ch.effective_skill(skill);
+    if current_level <= old_level {
+        eprintln!("{} hasn't improved since the last failure ({} → {}). Develop it first.", skill, old_level, current_level);
+        return;
+    }
+    let is_signature = ch.signature_skill == Some(skill);
+    let result = perform_check(&mut ch, skill, threshold, &context, CheckColor::White, is_signature);
+    println!("{}", result.format_de_style(&context));
     ch.save().expect("Failed to save character");
 }
 
@@ -129,14 +158,19 @@ fn cmd_hook_check(tool: &str, context: &str) {
     };
     let skill = Skill::for_tool(tool);
     let threshold = Difficulty::for_action(tool, context).threshold();
+    let color = CheckColor::for_action(tool, context);
     let ctx = if context.is_empty() { format!("{} action", tool) } else { context.to_string() };
-    let result = perform_check(&mut ch, skill, threshold, &ctx);
+    for ij in passive_interjections(&ch, tool, &ctx) { eprintln!("{}", ij.format_de_style()); }
+    let is_signature = ch.signature_skill == Some(skill);
+    let result = perform_check(&mut ch, skill, threshold, &ctx, color, is_signature);
     eprintln!("{}", result.format_de_style(&ctx));
     let json = serde_json::json!({
         "allow": result.success, "skill": result.skill.to_string(),
         "roll": [result.die1, result.die2], "modifier": result.modifier,
         "total": result.total, "threshold": result.threshold,
         "critical_success": result.critical_success, "critical_failure": result.critical_failure,
+        "check_color": result.check_color.label(),
+        "retryable": result.check_color == CheckColor::White && !result.success,
         "reason": if result.success { format!("{} check passed ({} vs {})", result.skill, result.total, result.threshold) }
             else { format!("{} check FAILED ({} vs {})", result.skill, result.total, result.threshold) }
     });

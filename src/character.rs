@@ -1,4 +1,6 @@
 use crate::skills::{Attribute, Skill};
+use crate::time::TimeOfDay;
+use crate::types::CheckColor;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -15,6 +17,8 @@ pub struct Character {
     pub attributes: HashMap<Attribute, u8>,
     pub thoughts: Vec<Thought>,
     pub check_history: Vec<CheckRecord>,
+    #[serde(default)]
+    pub signature_skill: Option<Skill>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -37,6 +41,10 @@ pub struct CheckRecord {
     pub success: bool,
     pub context: String,
     pub timestamp: DateTime<Utc>,
+    #[serde(default)]
+    pub check_color: CheckColor,
+    #[serde(default)]
+    pub skill_level_at_check: i8,
 }
 
 #[derive(Debug, Clone)]
@@ -55,7 +63,7 @@ pub const ARCHETYPES: &[Archetype] = &[
 ];
 
 impl Character {
-    pub fn new(name: String, archetype_name: &str) -> Self {
+    pub fn new(name: String, archetype_name: &str, signature: Option<Skill>) -> Self {
         let arch = ARCHETYPES.iter().find(|a| a.name.eq_ignore_ascii_case(archetype_name)).unwrap_or(&ARCHETYPES[4]);
         let mut attributes = HashMap::new();
         for (attr, val) in &arch.attributes { attributes.insert(*attr, *val); }
@@ -65,13 +73,15 @@ impl Character {
             skills.insert(*skill, base);
         }
         let now = Utc::now();
-        Character { name, archetype: arch.name.to_string(), level: 1, xp: 0, skill_points: 0, skills, attributes, thoughts: Vec::new(), check_history: Vec::new(), created_at: now, updated_at: now }
+        Character { name, archetype: arch.name.to_string(), level: 1, xp: 0, skill_points: 0, skills, attributes, thoughts: Vec::new(), check_history: Vec::new(), signature_skill: signature, created_at: now, updated_at: now }
     }
 
     pub fn effective_skill(&self, skill: Skill) -> i8 {
         let base = *self.skills.get(&skill).unwrap_or(&1) as i8;
         let thought_bonus: i8 = self.thoughts.iter().filter(|t| t.internalized).filter_map(|t| t.skill_modifiers.get(&skill)).sum();
-        base + thought_bonus
+        let signature_bonus: i8 = if self.signature_skill == Some(skill) { 1 } else { 0 };
+        let time_bonus = TimeOfDay::current().modifiers().get(&skill).copied().unwrap_or(0) as i8;
+        base + thought_bonus + signature_bonus + time_bonus
     }
 
     pub fn xp_to_next_level(&self) -> u32 { self.level * 100 }
@@ -93,6 +103,10 @@ impl Character {
         self.skills.insert(skill, new_val);
         self.updated_at = Utc::now();
         Ok(new_val)
+    }
+
+    pub fn last_failed_white_check(&self, skill: Skill) -> Option<&CheckRecord> {
+        self.check_history.iter().rev().find(|r| r.skill == skill && !r.success && r.check_color == CheckColor::White)
     }
 
     pub fn internalize_thought(&mut self, thought: Thought) { self.thoughts.push(thought); self.updated_at = Utc::now(); }

@@ -1,5 +1,6 @@
 use crate::character::Character;
 use crate::skills::{Attribute, Skill};
+use crate::time::TimeOfDay;
 use colored::Colorize;
 
 pub fn character_sheet(ch: &Character) -> String {
@@ -31,7 +32,8 @@ pub fn character_sheet(ch: &Character) -> String {
                     Attribute::Physique => bar.red().to_string(),
                     Attribute::Motorics => bar.yellow().to_string(),
                 };
-                out.push_str(&format!("  {:24} {:>2}{}  {}\n", skill.to_string(), effective, bonus, bar_colored));
+                let prefix = if ch.signature_skill == Some(*skill) { "★ " } else { "  " };
+                out.push_str(&format!("{}{:24} {:>2}{}  {}\n", prefix, skill.to_string(), effective, bonus, bar_colored));
             }
         }
     }
@@ -56,5 +58,6 @@ pub fn character_sheet(ch: &Character) -> String {
 }
 
 pub fn status_line(ch: &Character) -> String {
-    format!("{} Lv{} | XP {}/{} | SP {}", ch.name, ch.level, ch.xp, ch.xp_to_next_level(), ch.skill_points)
+    let time = TimeOfDay::current();
+    format!("{} Lv{} | XP {}/{} | SP {} | {} {}", ch.name, ch.level, ch.xp, ch.xp_to_next_level(), ch.skill_points, time.icon(), time.label())
 }
