@@ -4,6 +4,7 @@ mod companions;
 mod display;
 mod equipment;
 mod journal;
+mod portrait;
 mod skills;
 mod storybook;
 mod substances;
@@ -32,7 +33,11 @@ enum Commands {
     /// Create a new character profile
     New { name: String, #[arg(short, long, default_value = "generalist")] archetype: String, #[arg(short='s', long)] signature: Option<String> },
     /// Show character sheet
-    Status,
+    Status {
+        /// Show full body ASCII art portrait
+        #[arg(long)]
+        art: bool,
+    },
     /// List all saved profiles
     Profiles,
     /// Switch active profile
@@ -78,6 +83,12 @@ enum Commands {
         #[arg(short, long)]
         model: Option<String>,
     },
+    /// Show ASCII art character portrait
+    Portrait {
+        /// Show compact head-only portrait
+        #[arg(long)]
+        compact: bool,
+    },
     /// Export journal as HTML storybook
     #[command(name = "storybook")]
     Storybook {
@@ -101,7 +112,7 @@ fn main() {
     let cli = Cli::parse();
     match cli.command {
         Commands::New { name, archetype, signature } => cmd_new(&name, &archetype, signature.as_deref()),
-        Commands::Status => cmd_status(),
+        Commands::Status { art } => cmd_status(art),
         Commands::Profiles => cmd_profiles(),
         Commands::Switch { name } => cmd_switch(&name),
         Commands::Check { tool, context, difficulty, skill } => cmd_check(&tool, &context, difficulty, skill.as_deref()),
@@ -119,6 +130,7 @@ fn main() {
         Commands::Archetypes => cmd_archetypes(),
         Commands::Skills => cmd_skills(),
         Commands::Companions { model } => cmd_companions(model.as_deref()),
+        Commands::Portrait { compact } => cmd_portrait(compact),
         Commands::Storybook { output } => cmd_storybook(output),
     }
 }
@@ -133,8 +145,27 @@ fn cmd_new(name: &str, archetype: &str, signature: Option<&str>) {
     println!("Character '{}' created and set as active.", name);
 }
 
-fn cmd_status() {
-    match Character::load_active() { Ok(ch) => println!("{}", display::character_sheet(&ch)), Err(e) => eprintln!("{}", e) }
+fn cmd_status(art: bool) {
+    match Character::load_active() {
+        Ok(ch) => {
+            if art { print!("{}", portrait::render_character(&ch)); }
+            println!("{}", display::character_sheet(&ch));
+        }
+        Err(e) => eprintln!("{}", e),
+    }
+}
+
+fn cmd_portrait(compact: bool) {
+    match Character::load_active() {
+        Ok(ch) => {
+            if compact {
+                print!("{}", portrait::render_portrait(&ch));
+            } else {
+                print!("{}", portrait::render_character(&ch));
+            }
+        }
+        Err(e) => eprintln!("{}", e),
+    }
 }
 
 fn cmd_profiles() {
