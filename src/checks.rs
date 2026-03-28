@@ -1,5 +1,5 @@
 use crate::character::{Character, CheckRecord};
-use crate::skills::Skill;
+use crate::skills::{Attribute, Skill};
 use crate::types::CheckColor;
 use chrono::Utc;
 use colored::Colorize;
@@ -42,7 +42,7 @@ impl Difficulty {
 pub struct CheckResult {
     pub skill: Skill, pub die1: u8, pub die2: u8, pub modifier: i8, pub total: i8,
     pub threshold: u8, pub success: bool, pub critical_success: bool, pub critical_failure: bool,
-    pub check_color: CheckColor, pub is_signature: bool,
+    pub check_color: CheckColor, pub is_signature: bool, pub game_over: bool,
 }
 
 impl CheckResult {
@@ -64,7 +64,13 @@ impl CheckResult {
             else if self.success { format!("  {} whispers: You've got this. {}.", skill_name, domain) }
             else { format!("  {} mutters: Not this time. {} eludes you.", skill_name, domain) };
         let retry_hint = if !self.success && self.check_color == CheckColor::White { format!("\n  {}", "(White check — can retry after developing this skill)".dimmed()) } else if !self.success { format!("\n  {}", "(Red check — no second chances)".red().dimmed()) } else { String::new() };
-        format!("\n{}\n{}\n{}\n  {}\n{}{}\n", header.bold(), dice_line, result_line, context.dimmed(), flavor.italic(), retry_hint)
+        let game_over_msg = if self.game_over {
+            format!("\n\n{}\n{}\n{}\n",
+                "  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━".red().bold(),
+                "  GAME OVER".red().bold(),
+                "  The detective collapses. The case goes cold. You were so close.".red().italic())
+        } else { String::new() };
+        format!("\n{}\n{}\n{}\n  {}\n{}{}{}\n", header.bold(), dice_line, result_line, context.dimmed(), flavor.italic(), retry_hint, game_over_msg)
     }
 }
 
@@ -77,14 +83,21 @@ pub fn roll_check(character: &Character, skill: Skill, threshold: u8, _context: 
     let critical_success = die1 == 6 && die2 == 6;
     let critical_failure = die1 == 1 && die2 == 1;
     let success = if critical_success { true } else if critical_failure { false } else { total >= threshold as i8 };
-    CheckResult { skill, die1, die2, modifier, total, threshold, success, critical_success, critical_failure, check_color, is_signature }
+    CheckResult { skill, die1, die2, modifier, total, threshold, success, critical_success, critical_failure, check_color, is_signature, game_over: false }
 }
 
 pub fn perform_check(character: &mut Character, skill: Skill, threshold: u8, context: &str, check_color: CheckColor, is_signature: bool) -> CheckResult {
-    let result = roll_check(character, skill, threshold, context, check_color, is_signature);
+    let mut result = roll_check(character, skill, threshold, context, check_color, is_signature);
     let skill_level = character.effective_skill(skill);
     let record = CheckRecord { skill, difficulty: threshold, roll: (result.die1, result.die2), modifier: result.modifier, total: result.total, success: result.success, context: context.to_string(), timestamp: Utc::now(), check_color, skill_level_at_check: skill_level };
     character.record_check(record);
+    if result.critical_failure {
+        let dead = match skill.attribute() {
+            Attribute::Physique | Attribute::Motorics => character.take_physical_damage(1),
+            Attribute::Intellect | Attribute::Psyche => character.take_morale_damage(1),
+        };
+        if dead || character.is_dead() { result.game_over = true; }
+    }
     result
 }
 

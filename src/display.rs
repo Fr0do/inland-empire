@@ -7,6 +7,9 @@ pub fn character_sheet(ch: &Character) -> String {
     let mut out = String::new();
     out.push_str(&format!("\n{}  —  {}  (Level {})\n", ch.name.bold(), ch.archetype.dimmed(), ch.level));
     out.push_str(&format!("XP: {}/{}  |  Skill points: {}\n", ch.xp, ch.xp_to_next_level(), ch.skill_points));
+    let hearts: String = "❤️".repeat(ch.health as usize) + &"🖤".repeat((ch.max_health - ch.health) as usize);
+    let thoughts: String = "💭".repeat(ch.morale as usize) + &"░".repeat((ch.max_morale - ch.morale) as usize);
+    out.push_str(&format!("Health: {} ({}/{})  |  Morale: {} ({}/{})\n", hearts, ch.health, ch.max_health, thoughts, ch.morale, ch.max_morale));
     out.push_str(&"─".repeat(50));
     out.push('\n');
     for attr in &[Attribute::Intellect, Attribute::Psyche, Attribute::Physique, Attribute::Motorics] {
@@ -59,5 +62,8 @@ pub fn character_sheet(ch: &Character) -> String {
 
 pub fn status_line(ch: &Character) -> String {
     let time = TimeOfDay::current();
-    format!("{} Lv{} | XP {}/{} | SP {} | {} {}", ch.name, ch.level, ch.xp, ch.xp_to_next_level(), ch.skill_points, time.icon(), time.label())
+    format!("{} Lv{} | XP {}/{} | SP {} | ❤{}/{} 💭{}/{} | {} {}",
+        ch.name, ch.level, ch.xp, ch.xp_to_next_level(), ch.skill_points,
+        ch.health, ch.max_health, ch.morale, ch.max_morale,
+        time.icon(), time.label())
 }

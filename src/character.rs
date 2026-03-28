@@ -6,6 +6,9 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
 
+fn default_health() -> u8 { 4 }
+fn default_morale() -> u8 { 6 }
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Character {
     pub name: String,
@@ -21,6 +24,14 @@ pub struct Character {
     pub signature_skill: Option<Skill>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    #[serde(default = "default_health")]
+    pub health: u8,
+    #[serde(default = "default_health")]
+    pub max_health: u8,
+    #[serde(default = "default_morale")]
+    pub morale: u8,
+    #[serde(default = "default_morale")]
+    pub max_morale: u8,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -72,8 +83,12 @@ impl Character {
             let base = attributes.get(&skill.attribute()).copied().unwrap_or(1);
             skills.insert(*skill, base);
         }
+        let physique = attributes.get(&Attribute::Physique).copied().unwrap_or(1);
+        let psyche = attributes.get(&Attribute::Psyche).copied().unwrap_or(1);
+        let max_health = (physique * 2).max(2);
+        let max_morale = (psyche * 2).max(2);
         let now = Utc::now();
-        Character { name, archetype: arch.name.to_string(), level: 1, xp: 0, skill_points: 0, skills, attributes, thoughts: Vec::new(), check_history: Vec::new(), signature_skill: signature, created_at: now, updated_at: now }
+        Character { name, archetype: arch.name.to_string(), level: 1, xp: 0, skill_points: 0, skills, attributes, thoughts: Vec::new(), check_history: Vec::new(), signature_skill: signature, created_at: now, updated_at: now, health: max_health, max_health, morale: max_morale, max_morale }
     }
 
     pub fn effective_skill(&self, skill: Skill) -> i8 {
@@ -108,6 +123,18 @@ impl Character {
     pub fn last_failed_white_check(&self, skill: Skill) -> Option<&CheckRecord> {
         self.check_history.iter().rev().find(|r| r.skill == skill && !r.success && r.check_color == CheckColor::White)
     }
+
+    pub fn take_physical_damage(&mut self, amount: u8) -> bool {
+        self.health = self.health.saturating_sub(amount);
+        self.health == 0
+    }
+    pub fn take_morale_damage(&mut self, amount: u8) -> bool {
+        self.morale = self.morale.saturating_sub(amount);
+        self.morale == 0
+    }
+    pub fn heal(&mut self, amount: u8) { self.health = (self.health + amount).min(self.max_health); }
+    pub fn restore_morale(&mut self, amount: u8) { self.morale = (self.morale + amount).min(self.max_morale); }
+    pub fn is_dead(&self) -> bool { self.health == 0 || self.morale == 0 }
 
     pub fn internalize_thought(&mut self, thought: Thought) { self.thoughts.push(thought); self.updated_at = Utc::now(); }
 

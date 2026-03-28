@@ -104,6 +104,12 @@ fn cmd_check(tool: &str, context: &str, difficulty: Option<u8>, skill_override: 
     let is_signature = ch.signature_skill == Some(skill);
     let result = perform_check(&mut ch, skill, threshold, &ctx, color, is_signature);
     println!("{}", result.format_de_style(&ctx));
+    if result.game_over {
+        use colored::Colorize;
+        eprintln!("{}", "\n╔══════════════════════════════════════╗\n║           G A M E   O V E R          ║\n║  Your spirit breaks. The work stops.  ║\n║  (mercy rule: health/morale set to 1) ║\n╚══════════════════════════════════════╝".red().bold());
+        ch.health = ch.health.max(1);
+        ch.morale = ch.morale.max(1);
+    }
     ch.save().expect("Failed to save character");
 }
 
@@ -164,12 +170,19 @@ fn cmd_hook_check(tool: &str, context: &str) {
     let is_signature = ch.signature_skill == Some(skill);
     let result = perform_check(&mut ch, skill, threshold, &ctx, color, is_signature);
     eprintln!("{}", result.format_de_style(&ctx));
+    if result.game_over {
+        use colored::Colorize;
+        eprintln!("{}", "\n╔══════════════════════════════════════╗\n║           G A M E   O V E R          ║\n║  Your spirit breaks. The work stops.  ║\n║  (mercy rule: health/morale set to 1) ║\n╚══════════════════════════════════════╝".red().bold());
+        ch.health = ch.health.max(1);
+        ch.morale = ch.morale.max(1);
+    }
     let json = serde_json::json!({
         "allow": result.success, "skill": result.skill.to_string(),
         "roll": [result.die1, result.die2], "modifier": result.modifier,
         "total": result.total, "threshold": result.threshold,
         "critical_success": result.critical_success, "critical_failure": result.critical_failure,
         "check_color": result.check_color.label(),
+        "game_over": result.game_over,
         "retryable": result.check_color == CheckColor::White && !result.success,
         "reason": if result.success { format!("{} check passed ({} vs {})", result.skill, result.total, result.threshold) }
             else { format!("{} check FAILED ({} vs {})", result.skill, result.total, result.threshold) }
