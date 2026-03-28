@@ -1,4 +1,5 @@
 use crate::character::Character;
+use crate::equipment;
 use crate::skills::{Attribute, Skill};
 use crate::substances::Substance;
 use crate::time::TimeOfDay;
@@ -57,6 +58,9 @@ pub fn character_sheet(ch: &Character) -> String {
                 }
             }
         }
+    }
+    if !ch.loadout.slots.is_empty() {
+        out.push_str(&equipment::format_loadout(&ch.loadout));
     }
     let internalized: Vec<_> = ch.thoughts.iter().filter(|t| t.internalized).collect();
     if !internalized.is_empty() {

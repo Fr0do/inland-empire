@@ -1,3 +1,4 @@
+use crate::equipment::{self as equipment, Loadout};
 use crate::journal::{self, EntryType, Genre, JournalEntry};
 use crate::skills::{Attribute, Skill};
 use crate::substances::{ActiveEffect, Substance, starting_inventory};
@@ -42,6 +43,8 @@ pub struct Character {
     pub journal: Vec<JournalEntry>,
     #[serde(default)]
     pub genre: Genre,
+    #[serde(default)]
+    pub loadout: Loadout,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -98,7 +101,7 @@ impl Character {
         let max_health = (physique * 2).max(2);
         let max_morale = (psyche * 2).max(2);
         let now = Utc::now();
-        Character { name, archetype: arch.name.to_string(), level: 1, xp: 0, skill_points: 0, skills, attributes, thoughts: Vec::new(), check_history: Vec::new(), signature_skill: signature, created_at: now, updated_at: now, health: max_health, max_health, morale: max_morale, max_morale, inventory: starting_inventory(), active_effects: Vec::new(), journal: Vec::new(), genre: Genre::default() }
+        Character { name, archetype: arch.name.to_string(), level: 1, xp: 0, skill_points: 0, skills, attributes, thoughts: Vec::new(), check_history: Vec::new(), signature_skill: signature, created_at: now, updated_at: now, health: max_health, max_health, morale: max_morale, max_morale, inventory: starting_inventory(), active_effects: Vec::new(), journal: Vec::new(), genre: Genre::default(), loadout: equipment::starting_loadout() }
     }
 
     pub fn effective_skill(&self, skill: Skill) -> i8 {
@@ -107,7 +110,8 @@ impl Character {
         let signature_bonus: i8 = if self.signature_skill == Some(skill) { 1 } else { 0 };
         let time_bonus = TimeOfDay::current().modifiers().get(&skill).copied().unwrap_or(0) as i8;
         let substance_bonus: i8 = self.active_effects.iter().filter_map(|e| e.skill_modifiers.get(&skill)).sum();
-        base + thought_bonus + signature_bonus + time_bonus + substance_bonus
+        let equipment_bonus: i8 = self.loadout.total_modifiers().get(&skill).copied().unwrap_or(0);
+        base + thought_bonus + signature_bonus + time_bonus + substance_bonus + equipment_bonus
     }
 
     pub fn xp_to_next_level(&self) -> u32 { self.level * 100 }
@@ -239,6 +243,10 @@ impl Character {
             let psyche = ch.attributes.get(&Attribute::Psyche).copied().unwrap_or(1);
             ch.max_morale = (psyche * 2).max(2);
             ch.morale = ch.max_morale;
+        }
+        // Migration: grant starting loadout to pre-equipment characters
+        if ch.loadout.slots.is_empty() {
+            ch.loadout = equipment::starting_loadout();
         }
         Ok(ch)
     }

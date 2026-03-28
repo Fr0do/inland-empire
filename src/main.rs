@@ -5,11 +5,13 @@ mod display;
 mod equipment;
 mod journal;
 mod skills;
+mod storybook;
 mod substances;
 mod time;
 mod types;
 
 use character::{list_profiles, Character, Thought, ARCHETYPES};
+use equipment::{EquipSlot, catalog as equipment_catalog};
 use checks::{passive_interjections, perform_check, Difficulty};
 use journal::Genre;
 use substances::Substance;
@@ -57,6 +59,12 @@ enum Commands {
         #[command(subcommand)]
         action: Option<JournalAction>,
     },
+    /// Equip an item
+    Equip { item: String },
+    /// Unequip a slot
+    Unequip { slot: String },
+    /// Show available equipment catalog
+    Catalog,
     /// List available archetypes
     Archetypes,
     /// Show skill list with descriptions
@@ -66,6 +74,13 @@ enum Commands {
         /// Show which companion maps to this model hint (e.g. opus, sonnet, haiku)
         #[arg(short, long)]
         model: Option<String>,
+    },
+    /// Export journal as HTML storybook
+    #[command(name = "storybook")]
+    Storybook {
+        /// Output file path (default: {name}-journal.html)
+        #[arg(short, long)]
+        output: Option<String>,
     },
 }
 
@@ -95,9 +110,13 @@ fn main() {
         Commands::Inventory => cmd_inventory(),
         Commands::Rest => cmd_rest(),
         Commands::Journal { action } => cmd_journal(action),
+        Commands::Equip { item } => cmd_equip(&item),
+        Commands::Unequip { slot } => cmd_unequip(&slot),
+        Commands::Catalog => cmd_catalog(),
         Commands::Archetypes => cmd_archetypes(),
         Commands::Skills => cmd_skills(),
         Commands::Companions { model } => cmd_companions(model.as_deref()),
+        Commands::Storybook { output } => cmd_storybook(output),
     }
 }
 
@@ -325,6 +344,61 @@ fn cmd_archetypes() {
 fn cmd_skills() {
     println!("\nAll Skills:\n");
     for skill in Skill::all() { println!("  {:24} [{}] — {}", skill.to_string(), skill.attribute(), skill.claude_domain()); }
+}
+
+fn cmd_equip(item_name: &str) {
+    let mut ch = match Character::load_active() { Ok(c) => c, Err(e) => { eprintln!("{}", e); return; } };
+    let items = equipment_catalog();
+    let item = match items.into_iter().find(|i| i.id.eq_ignore_ascii_case(item_name) || i.name.to_lowercase().contains(&item_name.to_lowercase())) {
+        Some(i) => i,
+        None => { eprintln!("Unknown item: '{}'. Run 'ie catalog' to see available items.", item_name); return; }
+    };
+    use colored::Colorize;
+    let slot = item.slot;
+    let name = item.name.clone();
+    let prev = ch.loadout.equip(item);
+    ch.save().expect("Failed to save");
+    println!("Equipped {} in {} slot.", name.bold(), slot);
+    if let Some(p) = prev { println!("  Replaced: {}", p.name.dimmed()); }
+}
+
+fn cmd_unequip(slot_str: &str) {
+    let mut ch = match Character::load_active() { Ok(c) => c, Err(e) => { eprintln!("{}", e); return; } };
+    let slot: EquipSlot = slot_str.parse().unwrap_or_else(|e| { eprintln!("{}", e); std::process::exit(1); });
+    match ch.loadout.unequip(slot) {
+        Some(item) => { ch.save().expect("Failed to save"); println!("Unequipped {} from {} slot.", item.name, slot); }
+        None => eprintln!("Nothing equipped in {} slot.", slot),
+    }
+}
+
+fn cmd_catalog() {
+    use colored::Colorize;
+    let items = equipment_catalog();
+    println!("\n{}\n", "EQUIPMENT CATALOG".bold());
+    for slot in &[EquipSlot::Hat, EquipSlot::Jacket, EquipSlot::Shirt, EquipSlot::Pants, EquipSlot::Shoes, EquipSlot::Accessory] {
+        let slot_items: Vec<_> = items.iter().filter(|i| i.slot == *slot).collect();
+        if slot_items.is_empty() { continue; }
+        println!("  {}", slot.to_string().bold().underline());
+        for item in slot_items {
+            let mods: Vec<String> = item.skill_modifiers.iter().map(|(s, v)| {
+                if *v >= 0 { format!("{} +{}", s, v).green().to_string() }
+                else { format!("{} {}", s, v).red().to_string() }
+            }).collect();
+            println!("    {} — {}", item.name.bold(), item.description.dimmed());
+            println!("      id: {}  |  {}", item.id.dimmed(), mods.join(", "));
+        }
+        println!();
+    }
+}
+
+fn cmd_storybook(output: Option<String>) {
+    let ch = match Character::load_active() { Ok(c) => c, Err(e) => { eprintln!("{}", e); return; } };
+    if ch.journal.is_empty() { eprintln!("Journal is empty. Nothing to export."); return; }
+    let html = storybook::generate_storybook(&ch.name, &ch.archetype, ch.level, ch.genre, &ch.journal);
+    let path = output.unwrap_or_else(|| format!("{}-journal.html", ch.name.to_lowercase().replace(' ', "-")));
+    std::fs::write(&path, &html).expect("Failed to write storybook");
+    use colored::Colorize;
+    println!("Storybook exported to {}", path.bold());
 }
 
 fn cmd_companions(model: Option<&str>) {
