@@ -117,16 +117,16 @@ pub fn render_character(ch: &Character) -> String {
         String::new()
     };
 
-    let eyes_line = format!("      {}  {}  {}", head_l, cf(face.eyes), head_r);
-    let mouth_line = format!("      {} {} {}", head_l, cf(face.mouth), head_r);
+    let eyes_line = format!("      {}   {}   {}", head_l, cf(face.eyes), head_r);
+    let mouth_line = format!("      {}   {}   {}", head_l, cf(face.mouth), head_r);
 
     // ── Torso ──
     let (torso_tl, torso_tr, torso_fill, torso_bl, torso_br) = if has_jacket {
-        (slot_fill(EquipSlot::Jacket, "╔═══"), slot_fill(EquipSlot::Jacket, "═══╗"),
-         slot_fill(EquipSlot::Jacket, "║"), slot_fill(EquipSlot::Jacket, "╚═══"), slot_fill(EquipSlot::Jacket, "═══╝"))
+        (slot_fill(EquipSlot::Jacket, "╔════"), slot_fill(EquipSlot::Jacket, "════╗"),
+         slot_fill(EquipSlot::Jacket, "║"), slot_fill(EquipSlot::Jacket, "╚════"), slot_fill(EquipSlot::Jacket, "════╝"))
     } else {
-        ("┌───".dimmed().to_string(), "───┐".dimmed().to_string(),
-         "│".dimmed().to_string(), "└───".dimmed().to_string(), "───┘".dimmed().to_string())
+        ("┌────".dimmed().to_string(), "────┐".dimmed().to_string(),
+         "│".dimmed().to_string(), "└────".dimmed().to_string(), "────┘".dimmed().to_string())
     };
 
     let shirt_inner = if has_shirt {
@@ -213,13 +213,13 @@ pub fn render_portrait(ch: &Character) -> String {
     let cf = face.color_fn;
     let has_hat = ch.loadout.get(EquipSlot::Hat).is_some();
 
-    let (tl, tr, bl, br, side) = if has_hat {
-        (slot_fill(EquipSlot::Hat, "╔═══════╗"), String::new(),
-         slot_fill(EquipSlot::Hat, "╚═══════╝"), String::new(),
+    let (tl, _tr, bl, _br, side) = if has_hat {
+        (slot_fill(EquipSlot::Hat, "╔═════════╗"), String::new(),
+         slot_fill(EquipSlot::Hat, "╚═════════╝"), String::new(),
          slot_fill(EquipSlot::Hat, "║"))
     } else {
-        ("┌───────┐".to_string(), String::new(),
-         "└───────┘".to_string(), String::new(),
+        ("┌─────────┐".to_string(), String::new(),
+         "└─────────┘".to_string(), String::new(),
          "│".to_string())
     };
 
@@ -228,8 +228,8 @@ pub fn render_portrait(ch: &Character) -> String {
         out.push_str(&format!("       {}\n", "~~~".bright_black()));
     }
     out.push_str(&format!("  {}\n", tl));
-    out.push_str(&format!("  {}  {}  {}\n", side, cf(face.eyes), side));
-    out.push_str(&format!("  {} {} {}\n", side, cf(face.mouth), side));
+    out.push_str(&format!("  {}   {}   {}\n", side, cf(face.eyes), side));
+    out.push_str(&format!("  {}   {}   {}\n", side, cf(face.mouth), side));
     out.push_str(&format!("  {}\n", bl));
     out
 }
