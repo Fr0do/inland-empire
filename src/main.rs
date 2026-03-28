@@ -11,7 +11,7 @@ mod substances;
 mod time;
 mod types;
 
-use character::{list_profiles, Character, Thought, ARCHETYPES};
+use character::{list_profiles, Character, Thought, ThoughtPhase, ARCHETYPES};
 use equipment::{EquipSlot, catalog as equipment_catalog};
 use checks::{passive_interjections, perform_check, Difficulty};
 use journal::Genre;
@@ -46,8 +46,10 @@ enum Commands {
     Check { tool: String, #[arg(short, long, default_value = "")] context: String, #[arg(short, long)] difficulty: Option<u8>, #[arg(short, long)] skill: Option<String> },
     /// Develop a skill (spend skill points)
     Develop { skill: String },
-    /// Add a thought to the thought cabinet
+    /// Add a thought to the thought cabinet (begins researching)
     Think { name: String, #[arg(short, long, default_value = "")] description: String, #[arg(short, long, default_value = "")] modifiers: String },
+    /// Forget a thought from the cabinet
+    Forget { thought: String },
     /// Retry last failed white check for a skill
     Retry { skill: String },
     /// Hook mode: check a tool action, output JSON for Claude hooks
@@ -119,6 +121,7 @@ fn main() {
         Commands::Retry { skill } => cmd_retry(&skill),
         Commands::Develop { skill } => cmd_develop(&skill),
         Commands::Think { name, description, modifiers } => cmd_think(&name, &description, &modifiers),
+        Commands::Forget { thought } => cmd_forget(&thought),
         Commands::HookCheck { tool, context } => cmd_hook_check(&tool, &context),
         Commands::Use { substance } => cmd_use(&substance),
         Commands::Inventory => cmd_inventory(),
@@ -242,10 +245,34 @@ fn cmd_think(name: &str, description: &str, modifiers: &str) {
             }
         }
     }
-    let thought = Thought { name: name.to_string(), description: description.to_string(), skill_modifiers, internalized: true };
-    ch.internalize_thought(thought);
-    ch.save().expect("Failed to save");
-    println!("Thought '{}' internalized.", name);
+    let thought = Thought {
+        name: name.to_string(),
+        description: description.to_string(),
+        skill_modifiers,
+        internalized: false,
+        phase: ThoughtPhase::Internalized, // will be overwritten by equip_thought
+        research_modifiers: HashMap::new(),
+    };
+    match ch.equip_thought(thought) {
+        Ok(()) => {
+            use colored::Colorize;
+            println!("Thought '{}' equipped — researching ({} checks to internalize).", name.italic(), 5);
+            println!("  {}", "Penalties apply while researching.".dimmed());
+            ch.save().expect("Failed to save");
+        }
+        Err(e) => eprintln!("{}", e),
+    }
+}
+
+fn cmd_forget(name: &str) {
+    let mut ch = match Character::load_active() { Ok(c) => c, Err(e) => { eprintln!("{}", e); return; } };
+    match ch.forget_thought(name) {
+        Ok(()) => {
+            ch.save().expect("Failed to save");
+            println!("Thought '{}' forgotten.", name);
+        }
+        Err(e) => eprintln!("{}", e),
+    }
 }
 
 fn cmd_hook_check(tool: &str, context: &str) {
@@ -255,6 +282,30 @@ fn cmd_hook_check(tool: &str, context: &str) {
     };
     let skill = Skill::for_tool(tool);
     let threshold = Difficulty::for_action(tool, context).threshold();
+
+    // Fast path: auto-pass trivial checks for skilled characters (no XP, no journal entry)
+    if threshold <= 6 {
+        let effective = ch.effective_skill(skill);
+        if effective >= 4 {
+            let json = serde_json::json!({
+                "allow": true,
+                "skill": skill.to_string(),
+                "roll": [0, 0],
+                "modifier": effective,
+                "total": effective,
+                "threshold": threshold,
+                "critical_success": false,
+                "critical_failure": false,
+                "check_color": "White",
+                "game_over": false,
+                "retryable": false,
+                "reason": format!("{} auto-pass (trivial)", skill)
+            });
+            println!("{}", json);
+            return;
+        }
+    }
+
     let color = CheckColor::for_action(tool, context);
     let ctx = if context.is_empty() { format!("{} action", tool) } else { context.to_string() };
     for ij in passive_interjections(&ch, tool, &ctx) { eprintln!("{}", ij.format_de_style()); }

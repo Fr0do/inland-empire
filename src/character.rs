@@ -47,12 +47,27 @@ pub struct Character {
     pub loadout: Loadout,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum ThoughtPhase {
+    Researching { checks_remaining: u8 },
+    Internalized,
+}
+
+fn default_phase() -> ThoughtPhase { ThoughtPhase::Internalized }
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Thought {
     pub name: String,
     pub description: String,
     pub skill_modifiers: HashMap<Skill, i8>,
+    /// Kept for serde backwards compatibility with old save files; ignored in logic
+    #[serde(default)]
     pub internalized: bool,
+    #[serde(default = "default_phase")]
+    pub phase: ThoughtPhase,
+    /// Penalty modifiers while researching (negative of some bonuses)
+    #[serde(default)]
+    pub research_modifiers: HashMap<Skill, i8>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -106,7 +121,12 @@ impl Character {
 
     pub fn effective_skill(&self, skill: Skill) -> i8 {
         let base = *self.skills.get(&skill).unwrap_or(&1) as i8;
-        let thought_bonus: i8 = self.thoughts.iter().filter(|t| t.internalized).filter_map(|t| t.skill_modifiers.get(&skill)).sum();
+        let thought_bonus: i8 = self.thoughts.iter()
+            .filter_map(|t| match t.phase {
+                ThoughtPhase::Researching { .. } => t.research_modifiers.get(&skill),
+                ThoughtPhase::Internalized => t.skill_modifiers.get(&skill),
+            })
+            .sum();
         let signature_bonus: i8 = if self.signature_skill == Some(skill) { 1 } else { 0 };
         let time_bonus = TimeOfDay::current().modifiers().get(&skill).copied().unwrap_or(0) as i8;
         let substance_bonus: i8 = self.active_effects.iter().filter_map(|e| e.skill_modifiers.get(&skill)).sum();
@@ -160,12 +180,34 @@ impl Character {
     pub fn restore_morale(&mut self, amount: u8) { self.morale = (self.morale + amount).min(self.max_morale); }
     pub fn is_dead(&self) -> bool { self.health == 0 || self.morale == 0 }
 
-    pub fn internalize_thought(&mut self, thought: Thought) {
+    pub fn equip_thought(&mut self, mut thought: Thought) -> Result<(), String> {
+        let researching_count = self.thoughts.iter()
+            .filter(|t| matches!(t.phase, ThoughtPhase::Researching { .. }))
+            .count();
+        if researching_count >= 3 {
+            return Err("Too many thoughts being researched (max 3). Forget one first.".into());
+        }
+        // Generate research penalties: -1 for each positive bonus skill
+        let mut research_mods = HashMap::new();
+        for (skill, val) in &thought.skill_modifiers {
+            if *val > 0 { research_mods.insert(*skill, -1i8); }
+        }
+        thought.research_modifiers = research_mods;
+        thought.phase = ThoughtPhase::Researching { checks_remaining: 5 };
         let vars = HashMap::from([("thought".into(), thought.name.clone())]);
         let entry = journal::generate_entry(self.genre, EntryType::ThoughtInternalized, &vars);
         self.journal.push(entry);
         self.thoughts.push(thought);
         self.updated_at = Utc::now();
+        Ok(())
+    }
+
+    pub fn forget_thought(&mut self, name: &str) -> Result<(), String> {
+        let pos = self.thoughts.iter().position(|t| t.name.eq_ignore_ascii_case(name))
+            .ok_or_else(|| format!("Thought '{}' not found in cabinet.", name))?;
+        self.thoughts.remove(pos);
+        self.updated_at = Utc::now();
+        Ok(())
     }
 
     pub fn use_substance(&mut self, substance: Substance) -> Result<String, String> {
@@ -249,6 +291,17 @@ impl Character {
         }
         self.check_history.push(record);
         self.tick_effects();
+        // Progress researching thoughts
+        for thought in &mut self.thoughts {
+            if let ThoughtPhase::Researching { ref mut checks_remaining } = thought.phase {
+                if *checks_remaining > 0 {
+                    *checks_remaining -= 1;
+                }
+                if *checks_remaining == 0 {
+                    thought.phase = ThoughtPhase::Internalized;
+                }
+            }
+        }
         self.add_xp(xp)
     }
 

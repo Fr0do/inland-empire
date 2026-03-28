@@ -1,0 +1,11 @@
+{
+  "hooks": {
+    "PreToolUse": [{
+      "matcher": ".*",
+      "hooks": [{
+        "type": "command",
+        "command": "~/.claude/hooks/ie-check.sh"
+      }]
+    }]
+  }
+}

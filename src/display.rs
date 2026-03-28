@@ -1,4 +1,4 @@
-use crate::character::Character;
+use crate::character::{Character, ThoughtPhase};
 use crate::equipment;
 use crate::skills::{Attribute, Skill};
 use crate::substances::Substance;
@@ -62,12 +62,34 @@ pub fn character_sheet(ch: &Character) -> String {
     if !ch.loadout.slots.is_empty() {
         out.push_str(&equipment::format_loadout(&ch.loadout));
     }
-    let internalized: Vec<_> = ch.thoughts.iter().filter(|t| t.internalized).collect();
-    if !internalized.is_empty() {
+    if !ch.thoughts.is_empty() {
         out.push_str(&format!("\n{}\n", "THOUGHT CABINET".bold()));
-        for thought in internalized {
-            let mods: Vec<String> = thought.skill_modifiers.iter().map(|(s, v)| if *v >= 0 { format!("{} +{}", s, v) } else { format!("{} {}", s, v) }).collect();
-            out.push_str(&format!("  {} — {}\n    {}\n", thought.name.italic(), thought.description.dimmed(), mods.join(", ")));
+        for thought in &ch.thoughts {
+            match thought.phase {
+                ThoughtPhase::Researching { checks_remaining } => {
+                    let mods: Vec<String> = thought.research_modifiers.iter()
+                        .map(|(s, v)| if *v >= 0 { format!("{} +{}", s, v).green().to_string() } else { format!("{} {}", s, v).red().to_string() })
+                        .collect();
+                    let penalties = if mods.is_empty() { String::new() } else { format!(" — {}", mods.join(", ")) };
+                    out.push_str(&format!("  {} {} ({} checks left){}\n    {}\n",
+                        "⟳".yellow(),
+                        thought.name.italic().yellow().to_string(),
+                        checks_remaining,
+                        penalties,
+                        thought.description.dimmed()));
+                }
+                ThoughtPhase::Internalized => {
+                    let mods: Vec<String> = thought.skill_modifiers.iter()
+                        .map(|(s, v)| if *v >= 0 { format!("{} +{}", s, v).green().to_string() } else { format!("{} {}", s, v).red().to_string() })
+                        .collect();
+                    let bonuses = if mods.is_empty() { String::new() } else { format!(" — {}", mods.join(", ")) };
+                    out.push_str(&format!("  {} {}{}\n    {}\n",
+                        "✓".green(),
+                        thought.name.italic(),
+                        bonuses,
+                        thought.description.dimmed()));
+                }
+            }
         }
     }
     let recent: Vec<_> = ch.check_history.iter().rev().take(5).collect();
