@@ -1,3 +1,5 @@
+use crate::achievements::{self as achievements, Achievement};
+use crate::cases::{self as cases, Case};
 use crate::equipment::{self as equipment, Loadout};
 use crate::journal::{self, EntryType, Genre, JournalEntry};
 use crate::skills::{Attribute, Skill};
@@ -6,7 +8,7 @@ use crate::time::TimeOfDay;
 use crate::types::CheckColor;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 
 fn default_health() -> u8 { 4 }
@@ -45,6 +47,10 @@ pub struct Character {
     pub genre: Genre,
     #[serde(default)]
     pub loadout: Loadout,
+    #[serde(default)]
+    pub cases: Vec<Case>,
+    #[serde(default)]
+    pub achievements: HashSet<Achievement>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -116,7 +122,7 @@ impl Character {
         let max_health = (physique * 2).max(2);
         let max_morale = (psyche * 2).max(2);
         let now = Utc::now();
-        Character { name, archetype: arch.name.to_string(), level: 1, xp: 0, skill_points: 0, skills, attributes, thoughts: Vec::new(), check_history: Vec::new(), signature_skill: signature, created_at: now, updated_at: now, health: max_health, max_health, morale: max_morale, max_morale, inventory: starting_inventory(), active_effects: Vec::new(), journal: Vec::new(), genre: Genre::default(), loadout: equipment::starting_loadout() }
+        Character { name, archetype: arch.name.to_string(), level: 1, xp: 0, skill_points: 0, skills, attributes, thoughts: Vec::new(), check_history: Vec::new(), signature_skill: signature, created_at: now, updated_at: now, health: max_health, max_health, morale: max_morale, max_morale, inventory: starting_inventory(), active_effects: Vec::new(), journal: Vec::new(), genre: Genre::default(), loadout: equipment::starting_loadout(), cases: cases::all_cases(), achievements: HashSet::new() }
     }
 
     pub fn effective_skill(&self, skill: Skill) -> i8 {
@@ -302,6 +308,28 @@ impl Character {
                 }
             }
         }
+        // Check case progress
+        let case_ids: Vec<usize> = self.cases.iter().enumerate()
+            .filter(|(_, c)| !c.completed)
+            .map(|(i, _)| i)
+            .collect();
+        for i in case_ids {
+            let (current, target) = cases::check_case_progress(&self.cases[i], self);
+            if current >= target {
+                self.cases[i].completed = true;
+                let reward_xp = self.cases[i].reward_xp;
+                let reward_sub = self.cases[i].reward_substance;
+                self.add_xp(reward_xp);
+                if let Some(sub) = reward_sub {
+                    *self.inventory.entry(sub).or_insert(0) += 1;
+                }
+            }
+        }
+        // Check for newly earned achievements
+        let newly_earned = achievements::check_achievements(self);
+        for ach in newly_earned {
+            self.achievements.insert(ach);
+        }
         self.add_xp(xp)
     }
 
@@ -348,6 +376,10 @@ impl Character {
         // Migration: grant starting loadout to pre-equipment characters
         if ch.loadout.slots.is_empty() {
             ch.loadout = equipment::starting_loadout();
+        }
+        // Migration: populate cases for pre-cases characters
+        if ch.cases.is_empty() {
+            ch.cases = cases::all_cases();
         }
         Ok(ch)
     }

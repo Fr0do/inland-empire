@@ -1,3 +1,5 @@
+mod achievements;
+mod cases;
 mod character;
 mod checks;
 mod companions;
@@ -7,6 +9,7 @@ mod equipment;
 mod journal;
 mod portrait;
 mod skills;
+mod stats;
 mod storybook;
 mod substances;
 mod time;
@@ -101,6 +104,12 @@ enum Commands {
         #[arg(short, long)]
         output: Option<String>,
     },
+    /// Show check analytics and case file statistics
+    Stats,
+    /// Show cases (long-running objectives) with progress
+    Cases,
+    /// Show achievements and badges
+    Achievements,
 }
 
 #[derive(Subcommand)]
@@ -139,6 +148,9 @@ fn main() {
         Commands::Portrait { compact } => cmd_portrait(compact),
         Commands::Copotype => cmd_copotype(),
         Commands::Storybook { output } => cmd_storybook(output),
+        Commands::Stats => cmd_stats(),
+        Commands::Cases => cmd_cases(),
+        Commands::Achievements => cmd_achievements(),
     }
 }
 
@@ -161,6 +173,12 @@ fn cmd_status(art: bool) {
             let info = ct.info();
             use colored::Colorize;
             println!("  Copotype  {} — {}", info.name.cyan().bold(), info.title.dimmed());
+            let total = achievements::Achievement::all().len();
+            let earned = ch.achievements.len();
+            println!("  Achievements  {}/{}", earned.to_string().yellow().bold(), total);
+            let cases_done = ch.cases.iter().filter(|c| c.completed).count();
+            let cases_total = ch.cases.len();
+            println!("  Cases         {}/{} completed", cases_done, cases_total);
         }
         Err(e) => eprintln!("{}", e),
     }
@@ -505,6 +523,36 @@ fn cmd_storybook(output: Option<String>) {
     std::fs::write(&path, &html).expect("Failed to write storybook");
     use colored::Colorize;
     println!("Storybook exported to {}", path.bold());
+}
+
+fn cmd_stats() {
+    match Character::load_active() {
+        Ok(ch) => {
+            let s = stats::compute_stats(&ch);
+            print!("{}", stats::format_stats(&s));
+        }
+        Err(e) => eprintln!("{}", e),
+    }
+}
+
+fn cmd_cases() {
+    match Character::load_active() {
+        Ok(ch) => print!("{}", cases::format_cases(&ch.cases, &ch)),
+        Err(e) => eprintln!("{}", e),
+    }
+}
+
+fn cmd_achievements() {
+    match Character::load_active() {
+        Ok(ch) => {
+            let total = achievements::Achievement::all().len();
+            let earned = ch.achievements.len();
+            use colored::Colorize;
+            println!("  Achievements: {}/{}\n", earned.to_string().yellow().bold(), total);
+            print!("{}", achievements::format_achievements(&ch.achievements));
+        }
+        Err(e) => eprintln!("{}", e),
+    }
 }
 
 fn cmd_companions(model: Option<&str>) {
