@@ -1,20 +1,20 @@
 use crate::journal::{EntryType, Genre, JournalEntry};
 
-struct GenreTheme {
-    bg: &'static str,
-    bg2: &'static str,
-    text: &'static str,
-    accent: &'static str,
-    accent2: &'static str,
-    muted: &'static str,
-    font_stack: &'static str,
-    header_font: &'static str,
-    tag_bg: &'static str,
-    border: &'static str,
-    extra_css: &'static str,
+pub struct GenreTheme {
+    pub bg: &'static str,
+    pub bg2: &'static str,
+    pub text: &'static str,
+    pub accent: &'static str,
+    pub accent2: &'static str,
+    pub muted: &'static str,
+    pub font_stack: &'static str,
+    pub header_font: &'static str,
+    pub tag_bg: &'static str,
+    pub border: &'static str,
+    pub extra_css: &'static str,
 }
 
-fn theme(genre: Genre) -> GenreTheme {
+pub fn theme(genre: Genre) -> GenreTheme {
     match genre {
         Genre::Noir => GenreTheme {
             bg: "#1a1a2e",
@@ -206,7 +206,7 @@ fn theme(genre: Genre) -> GenreTheme {
     }
 }
 
-fn entry_type_css_class(et: EntryType) -> &'static str {
+pub fn entry_type_css_class(et: EntryType) -> &'static str {
     match et {
         EntryType::CriticalSuccess => "entry-critical-success",
         EntryType::CriticalFailure => "entry-critical-failure",
@@ -221,11 +221,11 @@ fn entry_type_css_class(et: EntryType) -> &'static str {
     }
 }
 
-fn format_timestamp(ts: &chrono::DateTime<chrono::Utc>) -> String {
+pub fn format_timestamp(ts: &chrono::DateTime<chrono::Utc>) -> String {
     ts.format("%Y-%m-%d %H:%M UTC").to_string()
 }
 
-fn escape_html(s: &str) -> String {
+pub fn escape_html(s: &str) -> String {
     s.replace('&', "&amp;")
         .replace('<', "&lt;")
         .replace('>', "&gt;")

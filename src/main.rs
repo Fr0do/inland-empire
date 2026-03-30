@@ -12,6 +12,7 @@ mod narrator;
 mod portrait;
 mod skills;
 mod stats;
+mod publish;
 mod storybook;
 mod substances;
 mod time;
@@ -110,6 +111,16 @@ enum Commands {
         #[arg(short, long)]
         output: Option<String>,
     },
+    /// Generate a multi-page static site from journal entries
+    #[command(name = "publish")]
+    Publish {
+        /// Base URL for the site (used in Atom feed links)
+        #[arg(short, long, default_value = "https://example.com")]
+        base_url: String,
+        /// Output directory (default: {name}-site)
+        #[arg(short, long)]
+        output: Option<String>,
+    },
     /// Show check analytics and case file statistics
     Stats,
     /// Show cases (long-running objectives) with progress
@@ -154,6 +165,7 @@ fn main() {
         Commands::Portrait { compact } => cmd_portrait(compact),
         Commands::Copotype => cmd_copotype(),
         Commands::Storybook { output } => cmd_storybook(output),
+        Commands::Publish { base_url, output } => cmd_publish(base_url, output),
         Commands::Stats => cmd_stats(),
         Commands::Cases => cmd_cases(),
         Commands::Achievements => cmd_achievements(),
@@ -561,6 +573,29 @@ fn cmd_storybook(output: Option<String>) {
     std::fs::write(&path, &html).expect("Failed to write storybook");
     use colored::Colorize;
     println!("Storybook exported to {}", path.bold());
+}
+
+fn cmd_publish(base_url: String, output: Option<String>) {
+    use colored::Colorize;
+    let ch = match Character::load_active() { Ok(c) => c, Err(e) => { eprintln!("{}", e); return; } };
+    if ch.journal.is_empty() { eprintln!("Journal is empty. Nothing to publish."); return; }
+
+    let site_dir = output.unwrap_or_else(|| format!("{}-site", ch.name.to_lowercase().replace(' ', "-")));
+    let files = publish::generate_site(&ch, &base_url);
+
+    let mut count = 0usize;
+    for (rel_path, content) in &files {
+        let full_path = std::path::Path::new(&site_dir).join(rel_path);
+        if let Some(parent) = full_path.parent() {
+            std::fs::create_dir_all(parent).expect("Failed to create output directory");
+        }
+        std::fs::write(&full_path, content).expect("Failed to write site file");
+        count += 1;
+    }
+
+    println!("Site generated: {} ({} files)", site_dir.bold(), count);
+    println!("  {} {}/{}", "→".dimmed(), site_dir, "index.html");
+    println!("  {} {}/{}", "→".dimmed(), site_dir, "feed.xml");
 }
 
 fn cmd_stats() {
