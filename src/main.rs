@@ -15,6 +15,7 @@ mod stats;
 mod storybook;
 mod substances;
 mod time;
+mod terminal;
 mod types;
 
 use character::{list_profiles, Character, Thought, ThoughtPhase, ARCHETYPES};
@@ -183,6 +184,7 @@ fn cmd_status(art: bool, oneline: bool) {
             use colored::Colorize;
             println!("  Copotype  {} — {}", info.name.cyan().bold(), info.title.dimmed());
             println!("  Agent     {}", agents::Agent::detect().to_string().cyan());
+            println!("  Terminal  {}", terminal::Terminal::detect().name().cyan());
             let total = achievements::Achievement::all().len();
             let earned = ch.achievements.len();
             println!("  Achievements  {}/{}", earned.to_string().yellow().bold(), total);
