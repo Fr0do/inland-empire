@@ -5,6 +5,7 @@ mod character;
 mod checks;
 mod companions;
 mod copotype;
+mod dashboard;
 mod display;
 mod equipment;
 mod journal;
@@ -168,6 +169,15 @@ enum Commands {
     Cases,
     /// Show achievements and badges
     Achievements,
+    /// Launch web dashboard in browser
+    Dashboard {
+        /// Port to serve on (default: 3000)
+        #[arg(short, long, default_value = "3000")]
+        port: u16,
+        /// Don't open browser automatically
+        #[arg(long)]
+        no_open: bool,
+    },
 }
 
 #[derive(Subcommand)]
@@ -228,6 +238,7 @@ fn main() {
         Commands::Stats => cmd_stats(),
         Commands::Cases => cmd_cases(),
         Commands::Achievements => cmd_achievements(),
+        Commands::Dashboard { port, no_open } => cmd_dashboard(port, no_open),
     }
 }
 
@@ -1209,5 +1220,12 @@ fn cmd_companions(model: Option<&str>) {
         );
         println!("  {}", format_companion_line(c, CompanionAction::Observes));
         println!();
+    }
+}
+
+fn cmd_dashboard(port: u16, no_open: bool) {
+    match Character::load_active() {
+        Ok(ch) => dashboard::serve(&ch, port, no_open),
+        Err(e) => eprintln!("{}", e),
     }
 }

@@ -2,8 +2,10 @@ use crate::character::Character;
 use crate::journal::EntryType;
 use crate::skills::Skill;
 use colored::Colorize;
+use serde::Serialize;
 use std::collections::HashMap;
 
+#[derive(Serialize)]
 pub struct Stats {
     pub total_checks: usize,
     pub successes: usize,
