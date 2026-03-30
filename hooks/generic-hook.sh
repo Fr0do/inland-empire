@@ -1,6 +1,6 @@
 #!/bin/bash
-TOOL_NAME="${CLAUDE_TOOL_NAME:-Bash}"
-TOOL_INPUT="${CLAUDE_TOOL_INPUT:-}"
+TOOL_NAME="${IE_TOOL:-${CLAUDE_TOOL_NAME:-Bash}}"
+TOOL_INPUT="${IE_CONTEXT:-${CLAUDE_TOOL_INPUT:-}}"
 
 # Run ie hook-check, capture stdout (JSON) and stderr (DE flavor)
 JSON_OUT=$(ie hook-check "$TOOL_NAME" -c "$TOOL_INPUT" 2>/dev/null)

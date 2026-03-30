@@ -1,4 +1,5 @@
 mod achievements;
+mod agents;
 mod cases;
 mod character;
 mod checks;
@@ -173,6 +174,7 @@ fn cmd_status(art: bool) {
             let info = ct.info();
             use colored::Colorize;
             println!("  Copotype  {} — {}", info.name.cyan().bold(), info.title.dimmed());
+            println!("  Agent     {}", agents::Agent::detect().to_string().cyan());
             let total = achievements::Achievement::all().len();
             let earned = ch.achievements.len();
             println!("  Achievements  {}/{}", earned.to_string().yellow().bold(), total);
@@ -357,6 +359,24 @@ fn cmd_hook_check(tool: &str, context: &str) {
         ch.health = ch.health.max(1);
         ch.morale = ch.morale.max(1);
     }
+    // Companion flavor
+    let model_hint = std::env::var("CLAUDE_MODEL")
+        .or_else(|_| std::env::var("IE_COMPANION"))
+        .unwrap_or_default();
+    let companion = companions::companion_for_model(&model_hint);
+    let companion_action = if result.success {
+        companions::CompanionAction::Completes
+    } else {
+        companions::CompanionAction::Fails
+    };
+    let companion_line = companions::random_line(companion, companion_action);
+
+    // Journal entry for subagent companions (Kim or Cuno)
+    if companion != companions::Companion::Detective {
+        let journal_text = format!("[{}] {}", companion, companion_line);
+        ch.add_journal_entry(journal_text);
+    }
+
     let json = serde_json::json!({
         "allow": result.success, "skill": result.skill.to_string(),
         "roll": [result.die1, result.die2], "modifier": result.modifier,
@@ -366,7 +386,8 @@ fn cmd_hook_check(tool: &str, context: &str) {
         "game_over": result.game_over,
         "retryable": result.check_color == CheckColor::White && !result.success,
         "reason": if result.success { format!("{} check passed ({} vs {})", result.skill, result.total, result.threshold) }
-            else { format!("{} check FAILED ({} vs {})", result.skill, result.total, result.threshold) }
+            else { format!("{} check FAILED ({} vs {})", result.skill, result.total, result.threshold) },
+        "companion": companion_line
     });
     println!("{}", json);
     ch.save().ok();
