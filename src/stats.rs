@@ -14,7 +14,7 @@ pub struct Stats {
     pub best_streak: usize,
     pub worst_streak: usize,
     pub by_skill: HashMap<Skill, (usize, usize)>, // (successes, total)
-    pub by_tool: HashMap<String, usize>,           // tool -> count
+    pub by_tool: HashMap<String, usize>,          // tool -> count
     pub total_xp: u32,
     pub substances_used: HashMap<String, usize>,
 }
@@ -43,7 +43,12 @@ pub fn compute_stats(ch: &Character) -> Stats {
         }
 
         // by_tool — first token of context is the tool name
-        let tool = record.context.split_whitespace().next().unwrap_or("unknown").to_string();
+        let tool = record
+            .context
+            .split_whitespace()
+            .next()
+            .unwrap_or("unknown")
+            .to_string();
         *by_tool.entry(tool).or_insert(0) += 1;
 
         // overall counts
@@ -75,9 +80,19 @@ pub fn compute_stats(ch: &Character) -> Stats {
     if let Some(last) = ch.check_history.last() {
         if last.success {
             // count backwards while success
-            current_streak = ch.check_history.iter().rev().take_while(|r| r.success).count() as i32;
+            current_streak = ch
+                .check_history
+                .iter()
+                .rev()
+                .take_while(|r| r.success)
+                .count() as i32;
         } else {
-            current_streak = -(ch.check_history.iter().rev().take_while(|r| !r.success).count() as i32);
+            current_streak = -(ch
+                .check_history
+                .iter()
+                .rev()
+                .take_while(|r| !r.success)
+                .count() as i32);
         }
     }
 
@@ -133,7 +148,14 @@ fn extract_substance_from_entry(content: &str) -> String {
     let words: Vec<&str> = content.split_whitespace().collect();
     for (i, word) in words.iter().enumerate() {
         let clean: String = word.chars().filter(|c| c.is_alphanumeric()).collect();
-        if clean.len() > 2 && clean.chars().next().map(|c| c.is_uppercase()).unwrap_or(false) && i > 0 {
+        if clean.len() > 2
+            && clean
+                .chars()
+                .next()
+                .map(|c| c.is_uppercase())
+                .unwrap_or(false)
+            && i > 0
+        {
             return clean;
         }
     }
@@ -309,11 +331,7 @@ pub fn format_stats(stats: &Stats) -> String {
             stats.substances_used.iter().map(|(s, c)| (s, *c)).collect();
         sub_vec.sort_by(|a, b| b.1.cmp(&a.1));
         for (sub, count) in &sub_vec {
-            lines.push(format!(
-                "  {} {}x",
-                sub.magenta(),
-                count.to_string().bold()
-            ));
+            lines.push(format!("  {} {}x", sub.magenta(), count.to_string().bold()));
         }
     }
 

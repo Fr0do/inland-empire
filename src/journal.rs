@@ -19,6 +19,7 @@ pub enum Genre {
 }
 
 impl Genre {
+    #[allow(dead_code)]
     pub fn all() -> &'static [Genre] {
         &[
             Genre::Noir,
@@ -383,8 +384,12 @@ pub fn format_journal(entries: &[JournalEntry], limit: usize, verbose: bool) -> 
         let ts_str = ts.dimmed().to_string();
 
         let tag_str = match entry.entry_type {
-            EntryType::CriticalSuccess => format!("[{}]", entry.entry_type).green().bold().to_string(),
-            EntryType::CriticalFailure => format!("[{}]", entry.entry_type).red().bold().to_string(),
+            EntryType::CriticalSuccess => {
+                format!("[{}]", entry.entry_type).green().bold().to_string()
+            }
+            EntryType::CriticalFailure => {
+                format!("[{}]", entry.entry_type).red().bold().to_string()
+            }
             EntryType::CheckPass => format!("[{}]", "PASS").green().to_string(),
             EntryType::CheckFail => format!("[{}]", "FAIL").red().to_string(),
             EntryType::GameOver => format!("[{}]", entry.entry_type).red().bold().to_string(),
@@ -399,9 +404,23 @@ pub fn format_journal(entries: &[JournalEntry], limit: usize, verbose: bool) -> 
         lines.push(format!("  {}", entry.content.italic()));
         if verbose {
             if let Some(ref d) = entry.details {
-                let roll_str = format!("{}+{}+{}={} vs DC{}", d.roll.0, d.roll.1, d.modifier, d.total, d.threshold);
-                let result = if d.success { "pass".green().to_string() } else { "fail".red().to_string() };
-                lines.push(format!("  {} {} | {} | {} → {}", "▸".dimmed(), d.skill.dimmed(), d.tool.dimmed(), roll_str.dimmed(), result));
+                let roll_str = format!(
+                    "{}+{}+{}={} vs DC{}",
+                    d.roll.0, d.roll.1, d.modifier, d.total, d.threshold
+                );
+                let result = if d.success {
+                    "pass".green().to_string()
+                } else {
+                    "fail".red().to_string()
+                };
+                lines.push(format!(
+                    "  {} {} | {} | {} → {}",
+                    "▸".dimmed(),
+                    d.skill.dimmed(),
+                    d.tool.dimmed(),
+                    roll_str.dimmed(),
+                    result
+                ));
             }
         }
         lines.push(String::new());

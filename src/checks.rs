@@ -10,18 +10,52 @@ use std::collections::HashMap;
 
 #[derive(Debug, Clone, Copy)]
 pub enum Difficulty {
-    Trivial, Easy, Medium, Challenging, Formidable, Legendary, Heroic, Godly,
+    Trivial,
+    Easy,
+    Medium,
+    Challenging,
+    Formidable,
+    Legendary,
+    Heroic,
+    Godly,
 }
 
 impl Difficulty {
     pub fn threshold(&self) -> u8 {
-        match self { Difficulty::Trivial => 6, Difficulty::Easy => 8, Difficulty::Medium => 10, Difficulty::Challenging => 12, Difficulty::Formidable => 14, Difficulty::Legendary => 16, Difficulty::Heroic => 18, Difficulty::Godly => 20 }
+        match self {
+            Difficulty::Trivial => 6,
+            Difficulty::Easy => 8,
+            Difficulty::Medium => 10,
+            Difficulty::Challenging => 12,
+            Difficulty::Formidable => 14,
+            Difficulty::Legendary => 16,
+            Difficulty::Heroic => 18,
+            Difficulty::Godly => 20,
+        }
     }
     pub fn from_threshold(n: u8) -> Self {
-        match n { 0..=6 => Difficulty::Trivial, 7..=8 => Difficulty::Easy, 9..=10 => Difficulty::Medium, 11..=12 => Difficulty::Challenging, 13..=14 => Difficulty::Formidable, 15..=16 => Difficulty::Legendary, 17..=18 => Difficulty::Heroic, _ => Difficulty::Godly }
+        match n {
+            0..=6 => Difficulty::Trivial,
+            7..=8 => Difficulty::Easy,
+            9..=10 => Difficulty::Medium,
+            11..=12 => Difficulty::Challenging,
+            13..=14 => Difficulty::Formidable,
+            15..=16 => Difficulty::Legendary,
+            17..=18 => Difficulty::Heroic,
+            _ => Difficulty::Godly,
+        }
     }
     pub fn label(&self) -> &'static str {
-        match self { Difficulty::Trivial => "Trivial", Difficulty::Easy => "Easy", Difficulty::Medium => "Medium", Difficulty::Challenging => "Challenging", Difficulty::Formidable => "Formidable", Difficulty::Legendary => "Legendary", Difficulty::Heroic => "Heroic", Difficulty::Godly => "Godly" }
+        match self {
+            Difficulty::Trivial => "Trivial",
+            Difficulty::Easy => "Easy",
+            Difficulty::Medium => "Medium",
+            Difficulty::Challenging => "Challenging",
+            Difficulty::Formidable => "Formidable",
+            Difficulty::Legendary => "Legendary",
+            Difficulty::Heroic => "Heroic",
+            Difficulty::Godly => "Godly",
+        }
     }
     pub fn for_action(tool: &str, context: &str) -> Self {
         let ctx = context.to_lowercase();
@@ -30,10 +64,19 @@ impl Difficulty {
             "Edit" | "edit" => Difficulty::Easy,
             "Write" | "write" => Difficulty::Medium,
             "Bash" | "bash" => {
-                if ctx.contains("rm ") || ctx.contains("reset --hard") || ctx.contains("force") || ctx.contains("drop") { Difficulty::Formidable }
-                else if ctx.contains("git push") || ctx.contains("deploy") { Difficulty::Challenging }
-                else if ctx.contains("git") || ctx.contains("npm") || ctx.contains("cargo") { Difficulty::Easy }
-                else { Difficulty::Medium }
+                if ctx.contains("rm ")
+                    || ctx.contains("reset --hard")
+                    || ctx.contains("force")
+                    || ctx.contains("drop")
+                {
+                    Difficulty::Formidable
+                } else if ctx.contains("git push") || ctx.contains("deploy") {
+                    Difficulty::Challenging
+                } else if ctx.contains("git") || ctx.contains("npm") || ctx.contains("cargo") {
+                    Difficulty::Easy
+                } else {
+                    Difficulty::Medium
+                }
             }
             "Agent" | "agent" => Difficulty::Medium,
             _ => Difficulty::Medium,
@@ -43,10 +86,20 @@ impl Difficulty {
 
 #[derive(Debug)]
 pub struct CheckResult {
-    pub skill: Skill, pub die1: u8, pub die2: u8, pub modifier: i8, pub total: i8,
-    pub threshold: u8, pub success: bool, pub critical_success: bool, pub critical_failure: bool,
-    pub check_color: CheckColor, pub is_signature: bool, pub game_over: bool,
-    pub level_up: Option<u32>, pub loot: Option<Substance>,
+    pub skill: Skill,
+    pub die1: u8,
+    pub die2: u8,
+    pub modifier: i8,
+    pub total: i8,
+    pub threshold: u8,
+    pub success: bool,
+    pub critical_success: bool,
+    pub critical_failure: bool,
+    pub check_color: CheckColor,
+    pub is_signature: bool,
+    pub game_over: bool,
+    pub level_up: Option<u32>,
+    pub loot: Option<Substance>,
 }
 
 impl CheckResult {
@@ -54,41 +107,117 @@ impl CheckResult {
         let skill_name = self.skill.to_string().to_uppercase();
         let attr = self.skill.attribute();
         let difficulty = Difficulty::from_threshold(self.threshold);
-        let mod_str = if self.modifier >= 0 { format!("+{}", self.modifier) } else { format!("{}", self.modifier) };
-        let color_tag = match self.check_color { CheckColor::White => "○".dimmed().to_string(), CheckColor::Red => "●".red().to_string() };
+        let mod_str = if self.modifier >= 0 {
+            format!("+{}", self.modifier)
+        } else {
+            format!("{}", self.modifier)
+        };
+        let color_tag = match self.check_color {
+            CheckColor::White => "○".dimmed().to_string(),
+            CheckColor::Red => "●".red().to_string(),
+        };
         let colored_skill = match attr {
             Attribute::Intellect => skill_name.blue().bold().to_string(),
             Attribute::Psyche => skill_name.magenta().bold().to_string(),
             Attribute::Physique => skill_name.red().bold().to_string(),
             Attribute::Motorics => skill_name.yellow().bold().to_string(),
         };
-        let header = format!("{} {} [{}] — {} check (DC {})", color_tag, colored_skill, attr, difficulty.label(), self.threshold);
-        let dice_line = format!("  {} + {} {} = {}  vs  {}", self.die1, self.die2, mod_str, self.total, self.threshold);
-        let result_line = if self.critical_success { "  CRITICAL SUCCESS".green().bold().to_string() }
-            else if self.critical_failure { "  CRITICAL FAILURE".red().bold().to_string() }
-            else if self.success { "  SUCCESS".green().to_string() }
-            else { "  FAILURE".red().to_string() };
+        let header = format!(
+            "{} {} [{}] — {} check (DC {})",
+            color_tag,
+            colored_skill,
+            attr,
+            difficulty.label(),
+            self.threshold
+        );
+        let dice_line = format!(
+            "  {} + {} {} = {}  vs  {}",
+            self.die1, self.die2, mod_str, self.total, self.threshold
+        );
+        let result_line = if self.critical_success {
+            "  CRITICAL SUCCESS".green().bold().to_string()
+        } else if self.critical_failure {
+            "  CRITICAL FAILURE".red().bold().to_string()
+        } else if self.success {
+            "  SUCCESS".green().to_string()
+        } else {
+            "  FAILURE".red().to_string()
+        };
         let domain = self.skill.claude_domain();
-        let flavor = if self.is_signature && self.success { format!("  {} whispers: This is what you were MADE for. {}.", skill_name, domain) }
-            else if self.is_signature && !self.success { format!("  {} mutters: Even your strongest skill falters... {} slips away.", skill_name, domain) }
-            else if self.success { format!("  {} whispers: You've got this. {}.", skill_name, domain) }
-            else { format!("  {} mutters: Not this time. {} eludes you.", skill_name, domain) };
-        let retry_hint = if !self.success && self.check_color == CheckColor::White { format!("\n  {}", "(White check — can retry after developing this skill)".dimmed()) } else if !self.success { format!("\n  {}", "(Red check — no second chances)".red().dimmed()) } else { String::new() };
+        let flavor = if self.is_signature && self.success {
+            format!(
+                "  {} whispers: This is what you were MADE for. {}.",
+                skill_name, domain
+            )
+        } else if self.is_signature && !self.success {
+            format!(
+                "  {} mutters: Even your strongest skill falters... {} slips away.",
+                skill_name, domain
+            )
+        } else if self.success {
+            format!("  {} whispers: You've got this. {}.", skill_name, domain)
+        } else {
+            format!(
+                "  {} mutters: Not this time. {} eludes you.",
+                skill_name, domain
+            )
+        };
+        let retry_hint = if !self.success && self.check_color == CheckColor::White {
+            format!(
+                "\n  {}",
+                "(White check — can retry after developing this skill)".dimmed()
+            )
+        } else if !self.success {
+            format!("\n  {}", "(Red check — no second chances)".red().dimmed())
+        } else {
+            String::new()
+        };
         let level_up_msg = if let (Some(lvl), Some(loot)) = (self.level_up, self.loot) {
-            format!("\n\n  {} Level {}! +1 skill point. Found: {}",
-                "LEVEL UP!".yellow().bold(), lvl, loot.to_string().magenta())
-        } else { String::new() };
+            format!(
+                "\n\n  {} Level {}! +1 skill point. Found: {}",
+                "LEVEL UP!".yellow().bold(),
+                lvl,
+                loot.to_string().magenta()
+            )
+        } else {
+            String::new()
+        };
         let game_over_msg = if self.game_over {
-            format!("\n\n{}\n{}\n{}\n",
-                "  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━".red().bold(),
+            format!(
+                "\n\n{}\n{}\n{}\n",
+                "  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                    .red()
+                    .bold(),
                 "  GAME OVER".red().bold(),
-                "  The detective collapses. The case goes cold. You were so close.".red().italic())
-        } else { String::new() };
-        format!("\n{}\n{}\n{}\n  {}\n{}{}{}{}\n", header.bold(), dice_line, result_line, context.dimmed(), flavor.italic(), retry_hint, level_up_msg, game_over_msg)
+                "  The detective collapses. The case goes cold. You were so close."
+                    .red()
+                    .italic()
+            )
+        } else {
+            String::new()
+        };
+        format!(
+            "\n{}\n{}\n{}\n  {}\n{}{}{}{}\n",
+            header.bold(),
+            dice_line,
+            result_line,
+            context.dimmed(),
+            flavor.italic(),
+            retry_hint,
+            level_up_msg,
+            game_over_msg
+        )
     }
 }
 
-pub fn roll_check(character: &Character, skill: Skill, threshold: u8, _context: &str, check_color: CheckColor, is_signature: bool) -> CheckResult {
+pub fn roll_check(
+    character: &Character,
+    skill: Skill,
+    threshold: u8,
+    _context: &str,
+    check_color: CheckColor,
+    is_signature: bool,
+) -> CheckResult {
     let mut rng = rand::rng();
     let die1: u8 = rng.random_range(1..=6);
     let die2: u8 = rng.random_range(1..=6);
@@ -96,14 +225,60 @@ pub fn roll_check(character: &Character, skill: Skill, threshold: u8, _context: 
     let total = die1 as i8 + die2 as i8 + modifier;
     let critical_success = die1 == 6 && die2 == 6;
     let critical_failure = die1 == 1 && die2 == 1;
-    let success = if critical_success { true } else if critical_failure { false } else { total >= threshold as i8 };
-    CheckResult { skill, die1, die2, modifier, total, threshold, success, critical_success, critical_failure, check_color, is_signature, game_over: false, level_up: None, loot: None }
+    let success = if critical_success {
+        true
+    } else if critical_failure {
+        false
+    } else {
+        total >= threshold as i8
+    };
+    CheckResult {
+        skill,
+        die1,
+        die2,
+        modifier,
+        total,
+        threshold,
+        success,
+        critical_success,
+        critical_failure,
+        check_color,
+        is_signature,
+        game_over: false,
+        level_up: None,
+        loot: None,
+    }
 }
 
-pub fn perform_check(character: &mut Character, skill: Skill, threshold: u8, context: &str, check_color: CheckColor, is_signature: bool) -> CheckResult {
-    let mut result = roll_check(character, skill, threshold, context, check_color, is_signature);
+pub fn perform_check(
+    character: &mut Character,
+    skill: Skill,
+    threshold: u8,
+    context: &str,
+    check_color: CheckColor,
+    is_signature: bool,
+) -> CheckResult {
+    let mut result = roll_check(
+        character,
+        skill,
+        threshold,
+        context,
+        check_color,
+        is_signature,
+    );
     let skill_level = character.effective_skill(skill);
-    let record = CheckRecord { skill, difficulty: threshold, roll: (result.die1, result.die2), modifier: result.modifier, total: result.total, success: result.success, context: context.to_string(), timestamp: Utc::now(), check_color, skill_level_at_check: skill_level };
+    let record = CheckRecord {
+        skill,
+        difficulty: threshold,
+        roll: (result.die1, result.die2),
+        modifier: result.modifier,
+        total: result.total,
+        success: result.success,
+        context: context.to_string(),
+        timestamp: Utc::now(),
+        check_color,
+        skill_level_at_check: skill_level,
+    };
     if let Some((level, loot)) = character.record_check(record) {
         result.level_up = Some(level);
         result.loot = Some(loot);
@@ -115,7 +290,8 @@ pub fn perform_check(character: &mut Character, skill: Skill, threshold: u8, con
         };
         if dead || character.is_dead() {
             result.game_over = true;
-            let entry = journal::generate_entry(character.genre, EntryType::GameOver, &HashMap::new());
+            let entry =
+                journal::generate_entry(character.genre, EntryType::GameOver, &HashMap::new());
             character.journal.push(entry);
         }
     }
@@ -129,12 +305,20 @@ pub fn passive_check(character: &Character, skill: Skill, threshold: u8) -> bool
 }
 
 #[derive(Debug)]
-pub struct Interjection { pub skill: Skill, pub message: String }
+pub struct Interjection {
+    pub skill: Skill,
+    pub message: String,
+}
 
 impl Interjection {
     pub fn format_de_style(&self) -> String {
         let name = self.skill.to_string().to_uppercase();
-        format!("{} {} — {}", name.bold(), "[Passive: Success]".green().dimmed(), self.message.italic())
+        format!(
+            "{} {} — {}",
+            name.bold(),
+            "[Passive: Success]".green().dimmed(),
+            self.message.italic()
+        )
     }
 }
 
@@ -311,21 +495,36 @@ fn interjection_messages(skill: Skill) -> &'static [&'static str] {
     }
 }
 
-pub fn passive_interjections(character: &Character, tool: &str, context: &str) -> Vec<Interjection> {
+pub fn passive_interjections(
+    character: &Character,
+    tool: &str,
+    context: &str,
+) -> Vec<Interjection> {
     let primary = Skill::for_tool(tool);
     let mut rng = rand::rng();
     let _ = context;
     let mut results: Vec<Interjection> = Vec::new();
     for skill in Skill::all() {
-        if *skill == primary { continue; }
+        if *skill == primary {
+            continue;
+        }
         let effective = character.effective_skill(*skill);
-        if effective <= 4 { continue; }
+        if effective <= 4 {
+            continue;
+        }
         let chance = (effective - 4) as f64 * 0.10;
-        if rng.random::<f64>() >= chance { continue; }
+        if rng.random::<f64>() >= chance {
+            continue;
+        }
         let messages = interjection_messages(*skill);
         let msg = messages[rng.random_range(0..messages.len())];
-        results.push(Interjection { skill: *skill, message: msg.to_string() });
-        if results.len() >= 3 { break; }
+        results.push(Interjection {
+            skill: *skill,
+            message: msg.to_string(),
+        });
+        if results.len() >= 3 {
+            break;
+        }
     }
     results
 }

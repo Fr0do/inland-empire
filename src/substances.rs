@@ -33,6 +33,7 @@ impl Substance {
     }
 
     /// Substances unlocked by default (no thought required)
+    #[allow(dead_code)]
     pub fn basic() -> &'static [Substance] {
         &[Substance::Coffee, Substance::Cigarette, Substance::Alcohol]
     }
@@ -42,7 +43,9 @@ impl Substance {
         match self {
             Substance::Coffee | Substance::Cigarette | Substance::Alcohol => None,
             Substance::Speed | Substance::Nostalgia => None,
-            Substance::Pyrholidon | Substance::Lsd | Substance::Mushrooms => Some("Расширение сознания"),
+            Substance::Pyrholidon | Substance::Lsd | Substance::Mushrooms => {
+                Some("Расширение сознания")
+            }
         }
     }
 
@@ -59,7 +62,7 @@ impl Substance {
         }
     }
 
-    pub fn to_active_effect(&self) -> ActiveEffect {
+    pub fn to_active_effect(self) -> ActiveEffect {
         let info = self.info();
         let skill_modifiers = info
             .skill_modifiers
@@ -67,7 +70,7 @@ impl Substance {
             .copied()
             .collect::<HashMap<Skill, i8>>();
         ActiveEffect {
-            substance: *self,
+            substance: self,
             skill_modifiers,
             checks_remaining: info.duration,
         }
@@ -133,7 +136,8 @@ static CIGARETTE_INFO: SubstanceInfo = SubstanceInfo {
 
 static ALCOHOL_INFO: SubstanceInfo = SubstanceInfo {
     name: "Alcohol",
-    description: "The world softens. Edges blur. Everything seems possible — and nothing seems to matter.",
+    description:
+        "The world softens. Edges blur. Everything seems possible — and nothing seems to matter.",
     health_restore: 0,
     morale_restore: 2,
     skill_modifiers: &[
@@ -146,7 +150,8 @@ static ALCOHOL_INFO: SubstanceInfo = SubstanceInfo {
 
 static SPEED_INFO: SubstanceInfo = SubstanceInfo {
     name: "Speed",
-    description: "Everything accelerates. You accelerate. The code scrolls by and you catch every line.",
+    description:
+        "Everything accelerates. You accelerate. The code scrolls by and you catch every line.",
     health_restore: 0,
     morale_restore: 1,
     skill_modifiers: &[
@@ -173,7 +178,8 @@ static NOSTALGIA_INFO: SubstanceInfo = SubstanceInfo {
 
 static PYRHOLIDON_INFO: SubstanceInfo = SubstanceInfo {
     name: "Pyrholidon",
-    description: "The world cracks open. You see through the walls of code, into the machine itself.",
+    description:
+        "The world cracks open. You see through the walls of code, into the machine itself.",
     health_restore: 2,
     morale_restore: 0,
     skill_modifiers: &[
@@ -277,7 +283,9 @@ pub fn loot_drop(unlocked_thoughts: &[String]) -> Substance {
             }
         }
     }
-    if pool.is_empty() { return Substance::Coffee; }
+    if pool.is_empty() {
+        return Substance::Coffee;
+    }
     let idx = rand::rng().random_range(0..pool.len());
     pool[idx]
 }

@@ -41,14 +41,17 @@ impl Terminal {
         }
     }
 
+    #[allow(dead_code)]
     pub fn supports_color(&self) -> bool {
         true
     }
 
+    #[allow(dead_code)]
     pub fn supports_images(&self) -> bool {
         matches!(self, Terminal::ITerm2 | Terminal::Kitty | Terminal::WezTerm)
     }
 
+    #[allow(dead_code)]
     pub fn image_protocol(&self) -> Option<&'static str> {
         match self {
             Terminal::ITerm2 => Some("iterm2"),
@@ -58,6 +61,7 @@ impl Terminal {
         }
     }
 
+    #[allow(dead_code)]
     pub fn notify(&self, title: &str, message: &str) {
         match self {
             Terminal::ITerm2 => eprint!("\x1b]9;{}\x07", message),

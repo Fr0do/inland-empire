@@ -9,10 +9,7 @@ const FEED_ENTRY_LIMIT: usize = 50;
 
 /// Generate a multi-page static site from a character's journal.
 /// Returns a vec of (relative_path, content) pairs for the caller to write to disk.
-pub fn generate_site(
-    ch: &crate::character::Character,
-    base_url: &str,
-) -> Vec<(PathBuf, String)> {
+pub fn generate_site(ch: &crate::character::Character, base_url: &str) -> Vec<(PathBuf, String)> {
     let stats = crate::stats::compute_stats(ch);
     let mut files: Vec<(PathBuf, String)> = Vec::new();
 
@@ -55,10 +52,7 @@ pub fn generate_site(
         let prev = if n > 1 { Some(n - 1) } else { None };
         let next = if n < entry_total { Some(n + 1) } else { None };
         let html = generate_entry_page(ch, entry, n, entry_total, prev, next, base_url);
-        files.push((
-            PathBuf::from(format!("entries/{:04}.html", n)),
-            html,
-        ));
+        files.push((PathBuf::from(format!("entries/{:04}.html", n)), html));
     }
 
     files
@@ -70,7 +64,7 @@ fn total_pages(count: usize) -> usize {
     if count == 0 {
         1
     } else {
-        (count + ENTRIES_PER_PAGE - 1) / ENTRIES_PER_PAGE
+        count.div_ceil(ENTRIES_PER_PAGE)
     }
 }
 
@@ -603,7 +597,11 @@ fn generate_index_page(
 "#,
         level = ch.level,
         total = total_entries,
-        word = if total_entries == 1 { "Entry" } else { "Entries" },
+        word = if total_entries == 1 {
+            "Entry"
+        } else {
+            "Entries"
+        },
         checks = stats.total_checks,
         pass_rate = pr,
         crits = stats.critical_successes,
@@ -709,19 +707,13 @@ fn generate_pagination(page: usize, total_pages: usize) -> String {
     }
 
     let prev = if page > 1 {
-        format!(
-            r#"<a href="{}">&laquo; Prev</a>"#,
-            page_href(page - 1)
-        )
+        format!(r#"<a href="{}">&laquo; Prev</a>"#, page_href(page - 1))
     } else {
         r#"<span class="entry-nav-placeholder"></span>"#.to_string()
     };
 
     let next = if page < total_pages {
-        format!(
-            r#"<a href="{}">Next &raquo;</a>"#,
-            page_href(page + 1)
-        )
+        format!(r#"<a href="{}">Next &raquo;</a>"#, page_href(page + 1))
     } else {
         r#"<span class="entry-nav-placeholder"></span>"#.to_string()
     };
@@ -764,12 +756,18 @@ fn generate_entry_page(
     };
 
     let prev_link = match prev {
-        Some(p) => format!(r#"<a href="{}" title="Previous entry">&larr; Previous</a>"#, entry_href(p)),
+        Some(p) => format!(
+            r#"<a href="{}" title="Previous entry">&larr; Previous</a>"#,
+            entry_href(p)
+        ),
         None => r#"<span class="entry-nav-placeholder"></span>"#.to_string(),
     };
 
     let next_link = match next {
-        Some(nx) => format!(r#"<a href="{}" title="Next entry">Next &rarr;</a>"#, entry_href(nx)),
+        Some(nx) => format!(
+            r#"<a href="{}" title="Next entry">Next &rarr;</a>"#,
+            entry_href(nx)
+        ),
         None => r#"<span class="entry-nav-placeholder"></span>"#.to_string(),
     };
 
@@ -840,7 +838,11 @@ fn generate_entry_page(
 }
 
 fn render_check_details(d: &CheckDetails) -> String {
-    let result_class = if d.success { "check-result-pass" } else { "check-result-fail" };
+    let result_class = if d.success {
+        "check-result-pass"
+    } else {
+        "check-result-fail"
+    };
     let result_label = if d.success { "PASS" } else { "FAIL" };
     let color_class = if d.check_color.to_lowercase() == "red" {
         "check-color-red"
@@ -1004,6 +1006,927 @@ fn generate_feed(ch: &crate::character::Character, base_url: &str) -> String {
         updated = updated,
         entries = feed_entries,
     )
+}
+
+// ── Timeline aggregator ───────────────────────────────────────────────────────
+
+/// Generate a standalone timeline aggregator (index.html + feeds.json).
+/// Returns a vec of (relative_path, content) pairs for the caller to write to disk.
+pub fn generate_timeline(own_feed_url: &str) -> Vec<(std::path::PathBuf, String)> {
+    let own_feed_url = own_feed_url.trim_end_matches('/');
+
+    let feeds_json = if own_feed_url.is_empty() {
+        "[]".to_string()
+    } else {
+        format!(
+            r#"[
+  {{ "url": "{own_feed_url}/feed.xml", "name": "My Journal" }}
+]
+"#,
+            own_feed_url = own_feed_url
+        )
+    };
+
+    let index_html = generate_timeline_html();
+
+    vec![
+        (std::path::PathBuf::from("index.html"), index_html),
+        (std::path::PathBuf::from("feeds.json"), feeds_json),
+    ]
+}
+
+fn generate_timeline_html() -> String {
+    r#"<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>INLAND EMPIRE — Timeline</title>
+  <meta name="description" content="A merged chronological feed of Inland Empire player journals">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #12121f;
+      --bg2: #1a1a2e;
+      --bg3: #0e0e1a;
+      --text: #c8b898;
+      --accent: #f0c070;
+      --accent2: #a08858;
+      --muted: #6a5a40;
+      --border: #2a2a3f;
+      --tag-bg: #1e1e30;
+      --scanline: rgba(255,255,255,0.02);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Georgia', 'Times New Roman', serif;
+      font-size: 16px;
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+
+    /* ── Scanline effect ── */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        var(--scanline) 2px,
+        var(--scanline) 4px
+      );
+      pointer-events: none;
+      z-index: 1000;
+      opacity: 0.4;
+    }
+
+    .container {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 5rem;
+    }
+
+    /* ── Header ── */
+    header {
+      text-align: center;
+      padding: 2.5rem 0 2rem;
+      margin-bottom: 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    header::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 10%; right: 10%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent2), transparent);
+    }
+
+    h1 {
+      font-family: 'Georgia', serif;
+      font-size: 2rem;
+      color: var(--accent);
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      line-height: 1.2;
+      text-shadow: 0 0 30px rgba(240,192,112,0.3);
+    }
+
+    .subtitle {
+      margin-top: 0.6rem;
+      font-size: 0.82rem;
+      color: var(--accent2);
+      opacity: 0.8;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+
+    /* ── Feed management ── */
+    .feeds-section {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .feeds-section h2 {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+
+    .feeds-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .feed-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.4rem 0.6rem;
+      background: var(--tag-bg);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      font-size: 0.85rem;
+    }
+
+    .feed-item-name {
+      color: var(--accent2);
+      font-weight: 600;
+      min-width: 8rem;
+    }
+
+    .feed-item-url {
+      color: var(--muted);
+      font-size: 0.75rem;
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .feed-item-status {
+      font-size: 0.68rem;
+      letter-spacing: 0.06em;
+    }
+
+    .feed-status-ok { color: #22cc66; }
+    .feed-status-err { color: #cc4444; }
+    .feed-status-loading { color: var(--muted); }
+
+    .btn-remove {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.7rem;
+      padding: 0.15em 0.5em;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+      flex-shrink: 0;
+    }
+
+    .btn-remove:hover { border-color: #cc4444; color: #cc4444; }
+
+    .add-feed-row {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .add-feed-input {
+      flex: 1;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.45rem 0.75rem;
+      border-radius: 3px;
+      font-size: 0.85rem;
+      font-family: inherit;
+      transition: border-color 0.15s;
+    }
+
+    .add-feed-input:focus {
+      outline: none;
+      border-color: var(--accent2);
+    }
+
+    .add-feed-input::placeholder { color: var(--muted); }
+
+    .btn-add {
+      background: var(--tag-bg);
+      border: 1px solid var(--accent2);
+      color: var(--accent);
+      font-size: 0.82rem;
+      padding: 0.45rem 1rem;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn-add:hover { background: var(--accent2); color: var(--bg); }
+
+    /* ── Status bar ── */
+    .status-bar {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      font-size: 0.78rem;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+    }
+
+    .status-count { color: var(--accent2); }
+
+    .btn-refresh {
+      margin-left: auto;
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.72rem;
+      padding: 0.25em 0.7em;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    .btn-refresh:hover { border-color: var(--accent2); color: var(--accent2); }
+
+    /* ── Timeline entries ── */
+    #timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 1.1rem;
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .entry {
+      background: var(--bg2);
+      padding: 1.1rem 1.4rem;
+      border-radius: 4px;
+      border-left: 3px solid var(--border);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--border);
+      animation: fadeInUp 0.2s ease forwards;
+      transition: background 0.2s ease, transform 0.1s ease;
+    }
+
+    .entry:hover { transform: translateX(2px); background: #1d1d32; }
+
+    .entry-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .entry-author {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--accent2);
+      letter-spacing: 0.04em;
+    }
+
+    .entry-time {
+      color: var(--muted);
+      font-size: 0.78rem;
+    }
+
+    .tag {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 0.15em 0.5em;
+      border-radius: 2px;
+      background: var(--tag-bg);
+    }
+
+    .entry-content {
+      color: var(--text);
+      font-size: 0.95rem;
+      margin: 0;
+    }
+
+    .entry-link {
+      display: inline-block;
+      margin-top: 0.5rem;
+      font-size: 0.72rem;
+      color: var(--accent2);
+      text-decoration: none;
+      opacity: 0.6;
+      letter-spacing: 0.05em;
+      transition: opacity 0.15s;
+    }
+
+    .entry-link:hover { opacity: 1; }
+
+    /* ── Entry type colors ── */
+    .tag-critical-success { color: #22cc66; }
+    .entry-critical-success { border-left-color: #22cc66; }
+
+    .tag-critical-failure { color: #cc2222; }
+    .entry-critical-failure { border-left-color: #cc2222; }
+
+    .tag-check-pass { color: #22cc66; }
+    .entry-check-pass { border-left-color: #22cc66; }
+
+    .tag-check-fail { color: #cc4444; }
+    .entry-check-fail { border-left-color: #cc4444; }
+
+    .tag-game-over { color: #cc2222; }
+    .entry-game-over { border-left-color: #cc2222; border-color: #cc2222; }
+
+    .tag-level-up { color: #ccaa00; }
+    .entry-level-up { border-left-color: #ccaa00; }
+
+    .tag-thought { color: var(--accent2); }
+    .entry-thought { border-left-color: var(--accent2); }
+
+    .tag-substance { color: #cc66ee; }
+    .entry-substance { border-left-color: #aa44cc; }
+
+    .tag-rest { color: var(--muted); }
+    .entry-rest { border-left-color: var(--muted); opacity: 0.75; }
+
+    .tag-manual { color: var(--text); opacity: 0.6; }
+
+    /* ── Loading / empty states ── */
+    .state-loading {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--muted);
+      font-size: 0.9rem;
+      letter-spacing: 0.1em;
+    }
+
+    .state-loading::before {
+      content: '';
+      display: block;
+      width: 2rem;
+      height: 2rem;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent2);
+      border-radius: 50%;
+      margin: 0 auto 1rem;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .state-empty {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .feed-error {
+      padding: 0.6rem 1rem;
+      background: rgba(204,34,34,0.08);
+      border: 1px solid rgba(204,34,34,0.3);
+      border-radius: 3px;
+      font-size: 0.78rem;
+      color: #cc6666;
+      margin-bottom: 0.75rem;
+    }
+
+    .feed-error strong { color: #cc4444; }
+
+    .load-more {
+      text-align: center;
+      padding: 1.5rem 0;
+    }
+
+    .btn-load-more {
+      background: var(--tag-bg);
+      border: 1px solid var(--border);
+      color: var(--accent2);
+      font-size: 0.82rem;
+      padding: 0.55rem 1.5rem;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    .btn-load-more:hover { border-color: var(--accent2); color: var(--accent); }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      margin-top: 4rem;
+      padding-top: 1.5rem;
+      font-size: 0.72rem;
+      color: var(--muted);
+      opacity: 0.55;
+      letter-spacing: 0.08em;
+      border-top: 1px solid var(--border);
+    }
+
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { opacity: 1; color: var(--accent2); }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      .container { padding: 1rem 1rem 3rem; }
+      h1 { font-size: 1.4rem; }
+      .add-feed-row { flex-direction: column; }
+      .entry { padding: 0.9rem 1rem; }
+      .feed-item-url { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Inland Empire</h1>
+      <p class="subtitle">Timeline &mdash; Merged Field Reports</p>
+    </header>
+
+    <section class="feeds-section" aria-label="Feed management">
+      <h2>Connected Feeds</h2>
+      <div id="feeds-list" class="feeds-list"></div>
+      <div class="add-feed-row">
+        <input
+          type="url"
+          id="add-feed-input"
+          class="add-feed-input"
+          placeholder="https://player.example.com"
+          aria-label="Feed URL to add"
+        >
+        <button class="btn-add" id="btn-add-feed">+ Add Feed</button>
+      </div>
+    </section>
+
+    <div class="status-bar">
+      <span id="status-text">Loading...</span>
+      <button class="btn-refresh" id="btn-refresh" title="Refresh all feeds">&#8635; Refresh</button>
+    </div>
+
+    <div id="error-area"></div>
+
+    <div id="timeline">
+      <div class="state-loading">Tuning in...</div>
+    </div>
+
+    <div id="load-more-area"></div>
+
+    <footer>
+      <p>Powered by <a href="https://github.com/inland-empire">Inland Empire</a></p>
+    </footer>
+  </div>
+
+  <script>
+  (function () {
+    'use strict';
+
+    const STORAGE_KEY = 'ie-timeline-feeds';
+    const PAGE_SIZE = 30;
+    const REFRESH_MS = 5 * 60 * 1000;
+
+    // ── State ──────────────────────────────────────────────────────────────────
+    let feeds = [];        // {{ url, name }}
+    let allEntries = [];   // parsed, merged, sorted
+    let rendered = 0;      // how many entries currently shown
+    let feedStatuses = {}; // url → 'loading' | 'ok' | 'error'
+    let cachedEntries = {}; // url → entry array (for offline-first)
+    let refreshTimer = null;
+
+    // ── Boot ──────────────────────────────────────────────────────────────────
+    async function boot() {
+      loadCachedEntries();
+      await loadFeeds();
+      renderFeedsList();
+      renderCachedTimeline();
+      await fetchAllFeeds();
+      scheduledRefresh();
+    }
+
+    function scheduledRefresh() {
+      clearTimeout(refreshTimer);
+      refreshTimer = setTimeout(async function () {
+        await fetchAllFeeds();
+        scheduledRefresh();
+      }, REFRESH_MS);
+    }
+
+    // ── Feed config ───────────────────────────────────────────────────────────
+    async function loadFeeds() {
+      let defaultFeeds = [];
+      try {
+        const r = await fetch('feeds.json', { cache: 'no-cache' });
+        if (r.ok) defaultFeeds = await r.json();
+      } catch (_) {}
+
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        try {
+          // localStorage takes priority; merge so defaults appear if not already present
+          const storedFeeds = JSON.parse(stored);
+          const storedUrls = new Set(storedFeeds.map(function (f) { return f.url; }));
+          const merged = storedFeeds.slice();
+          defaultFeeds.forEach(function (f) {
+            if (!storedUrls.has(f.url)) merged.push(f);
+          });
+          feeds = merged;
+        } catch (_) {
+          feeds = defaultFeeds;
+        }
+      } else {
+        feeds = defaultFeeds;
+      }
+      saveFeeds();
+    }
+
+    function saveFeeds() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(feeds));
+    }
+
+    function addFeed(url, name) {
+      url = url.trim().replace(/\/$/, '');
+      if (!url) return;
+      if (feeds.some(function (f) { return f.url === url; })) return;
+      const feedName = name || hostnameFromUrl(url);
+      feeds.push({ url: url, name: feedName });
+      saveFeeds();
+      renderFeedsList();
+      fetchSingleFeed(url).then(function () {
+        rebuildTimeline();
+        renderTimeline();
+      });
+    }
+
+    function removeFeed(url) {
+      feeds = feeds.filter(function (f) { return f.url !== url; });
+      delete cachedEntries[url];
+      delete feedStatuses[url];
+      saveFeeds();
+      saveCachedEntries();
+      renderFeedsList();
+      rebuildTimeline();
+      renderTimeline();
+    }
+
+    function hostnameFromUrl(url) {
+      try { return new URL(url).hostname; } catch (_) { return url; }
+    }
+
+    // ── Fetch ─────────────────────────────────────────────────────────────────
+    async function fetchAllFeeds() {
+      if (feeds.length === 0) {
+        updateStatus();
+        renderTimeline();
+        return;
+      }
+      feeds.forEach(function (f) {
+        feedStatuses[f.url] = feedStatuses[f.url] || 'loading';
+      });
+      renderFeedsList();
+      await Promise.all(feeds.map(function (f) { return fetchSingleFeed(f.url); }));
+      rebuildTimeline();
+      renderTimeline();
+    }
+
+    async function fetchSingleFeed(url) {
+      feedStatuses[url] = 'loading';
+      renderFeedStatus(url);
+      try {
+        const r = await fetch(url, { mode: 'cors', cache: 'no-cache' });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const text = await r.text();
+        const entries = parseAtom(text, url);
+        cachedEntries[url] = entries;
+        feedStatuses[url] = 'ok';
+        saveCachedEntries();
+        clearFeedError(url);
+      } catch (err) {
+        feedStatuses[url] = 'error';
+        showFeedError(url, err.message);
+      }
+      renderFeedStatus(url);
+    }
+
+    // ── Atom XML parsing ──────────────────────────────────────────────────────
+    function parseAtom(xmlText, feedUrl) {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(xmlText, 'application/xml');
+      if (doc.querySelector('parsererror')) return [];
+
+      const feedTitle = text(doc, 'feed > title') ||
+                        text(doc, 'channel > title') ||
+                        hostnameFromUrl(feedUrl);
+
+      const itemEls = Array.from(
+        doc.querySelectorAll('feed > entry, channel > item')
+      );
+
+      return itemEls.map(function (el) {
+        const title   = text(el, 'title') || '';
+        const content = text(el, 'content') || text(el, 'summary') ||
+                        text(el, 'description') || '';
+        const published = text(el, 'published') || text(el, 'updated') ||
+                          text(el, 'pubDate') || '';
+        const linkEl  = el.querySelector('link');
+        const link    = (linkEl && linkEl.getAttribute('href')) ||
+                        (linkEl && linkEl.textContent) || feedUrl;
+
+        return {
+          feedUrl:   feedUrl,
+          feedTitle: feedTitle,
+          title:     title,
+          content:   content,
+          published: published ? new Date(published) : new Date(0),
+          link:      link,
+          tagInfo:   parseTag(title),
+        };
+      });
+    }
+
+    function text(el, selector) {
+      const node = el.querySelector(selector);
+      if (!node) return '';
+      // For CDATA / HTML content nodes
+      return node.textContent.trim();
+    }
+
+    function parseTag(title) {
+      // Titles from the feed look like "CRITICAL SUCCESS: CharacterName"
+      // or "PASS: CharacterName"
+      const known = [
+        'CRITICAL SUCCESS', 'CRITICAL FAILURE', 'PASS', 'FAIL',
+        'GAME OVER', 'LEVEL UP', 'THOUGHT INTERNALIZED',
+        'SUBSTANCE USED', 'REST', 'MANUAL',
+      ];
+      for (let i = 0; i < known.length; i++) {
+        if (title.toUpperCase().startsWith(known[i] + ':') ||
+            title.toUpperCase().startsWith(known[i] + ' ')) {
+          return { label: known[i], cls: tagClass(known[i]) };
+        }
+      }
+      return { label: '', cls: '' };
+    }
+
+    function tagClass(label) {
+      const map = {
+        'CRITICAL SUCCESS':   'critical-success',
+        'CRITICAL FAILURE':   'critical-failure',
+        'PASS':               'check-pass',
+        'FAIL':               'check-fail',
+        'GAME OVER':          'game-over',
+        'LEVEL UP':           'level-up',
+        'THOUGHT INTERNALIZED': 'thought',
+        'SUBSTANCE USED':     'substance',
+        'REST':               'rest',
+        'MANUAL':             'manual',
+      };
+      return map[label] || '';
+    }
+
+    // ── Timeline build ────────────────────────────────────────────────────────
+    function rebuildTimeline() {
+      const all = [];
+      Object.values(cachedEntries).forEach(function (entries) {
+        entries.forEach(function (e) { all.push(e); });
+      });
+      all.sort(function (a, b) { return b.published - a.published; });
+      allEntries = all;
+      rendered = 0;
+    }
+
+    // ── Render: timeline ──────────────────────────────────────────────────────
+    function renderTimeline() {
+      const container = document.getElementById('timeline');
+      const moreArea  = document.getElementById('load-more-area');
+
+      if (allEntries.length === 0 && feeds.length === 0) {
+        container.innerHTML = '<div class="state-empty">No feeds added yet.<br>Add a player\'s site URL above to get started.</div>';
+        moreArea.innerHTML = '';
+        updateStatus();
+        return;
+      }
+
+      if (allEntries.length === 0) {
+        const anyLoading = Object.values(feedStatuses).some(function (s) { return s === 'loading'; });
+        if (anyLoading) {
+          container.innerHTML = '<div class="state-loading">Tuning in...</div>';
+        } else {
+          container.innerHTML = '<div class="state-empty">No entries found in connected feeds.</div>';
+        }
+        moreArea.innerHTML = '';
+        updateStatus();
+        return;
+      }
+
+      const batch = allEntries.slice(0, rendered + PAGE_SIZE);
+      rendered = batch.length;
+
+      const html = batch.map(function (e) { return renderEntry(e); }).join('');
+      container.innerHTML = html;
+
+      if (rendered < allEntries.length) {
+        moreArea.innerHTML = '<div class="load-more"><button class="btn-load-more" id="btn-load-more">Load more entries</button></div>';
+        document.getElementById('btn-load-more').addEventListener('click', function () {
+          rendered += PAGE_SIZE;
+          renderTimeline();
+          window.scrollBy(0, 100);
+        });
+      } else {
+        moreArea.innerHTML = '';
+      }
+
+      updateStatus();
+    }
+
+    function renderCachedTimeline() {
+      if (Object.keys(cachedEntries).length === 0) return;
+      rebuildTimeline();
+      renderTimeline();
+    }
+
+    function renderEntry(e) {
+      const cls   = e.tagInfo.cls ? 'entry entry-' + e.tagInfo.cls : 'entry';
+      const tagHtml = e.tagInfo.label
+        ? '<span class="tag tag-' + e.tagInfo.cls + '">' + esc(e.tagInfo.label) + '</span>'
+        : '';
+      const ts = formatDate(e.published);
+      const content = esc(e.content.replace(/<[^>]+>/g, '').slice(0, 300)) +
+                      (e.content.length > 300 ? '…' : '');
+      return '<article class="' + cls + '">' +
+        '<div class="entry-meta">' +
+          '<span class="entry-author">' + esc(e.feedTitle) + '</span>' +
+          '<span class="entry-time">' + ts + '</span>' +
+          tagHtml +
+        '</div>' +
+        '<p class="entry-content">' + content + '</p>' +
+        '<a class="entry-link" href="' + esc(e.link) + '" target="_blank" rel="noopener">View entry &rarr;</a>' +
+      '</article>';
+    }
+
+    function formatDate(d) {
+      if (!d || d.getTime() === 0) return '';
+      return d.toLocaleDateString(undefined, {
+        year: 'numeric', month: 'short', day: 'numeric',
+        hour: '2-digit', minute: '2-digit',
+      });
+    }
+
+    function esc(s) {
+      return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // ── Render: feeds list ────────────────────────────────────────────────────
+    function renderFeedsList() {
+      const container = document.getElementById('feeds-list');
+      if (feeds.length === 0) {
+        container.innerHTML = '<p style="font-size:0.8rem;color:var(--muted);padding:0.25rem 0">No feeds connected.</p>';
+        return;
+      }
+      container.innerHTML = feeds.map(function (f) {
+        const status = feedStatuses[f.url] || 'loading';
+        const statusLabel = status === 'ok' ? '&#10003; ok' :
+                            status === 'error' ? '&#10007; error' : '&#8230;';
+        const statusCls = 'feed-status-' + status;
+        return '<div class="feed-item" data-url="' + esc(f.url) + '">' +
+          '<span class="feed-item-name">' + esc(f.name) + '</span>' +
+          '<span class="feed-item-url">' + esc(f.url) + '</span>' +
+          '<span class="feed-item-status ' + statusCls + '">' + statusLabel + '</span>' +
+          '<button class="btn-remove" data-url="' + esc(f.url) + '">Remove</button>' +
+        '</div>';
+      }).join('');
+
+      container.querySelectorAll('.btn-remove').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          removeFeed(btn.dataset.url);
+        });
+      });
+    }
+
+    function renderFeedStatus(url) {
+      const el = document.querySelector('.feed-item[data-url="' + CSS.escape(url) + '"] .feed-item-status');
+      if (!el) return;
+      const status = feedStatuses[url] || 'loading';
+      el.className = 'feed-item-status feed-status-' + status;
+      el.innerHTML = status === 'ok' ? '&#10003; ok' :
+                     status === 'error' ? '&#10007; error' : '&#8230;';
+    }
+
+    // ── Errors ────────────────────────────────────────────────────────────────
+    function showFeedError(url, msg) {
+      const area = document.getElementById('error-area');
+      const id = 'err-' + btoa(url).replace(/[^a-z0-9]/gi, '');
+      let el = document.getElementById(id);
+      if (!el) {
+        el = document.createElement('div');
+        el.id = id;
+        el.className = 'feed-error';
+        area.appendChild(el);
+      }
+      const isCors = msg.toLowerCase().includes('failed') || msg === 'Failed to fetch';
+      el.innerHTML = '<strong>' + esc(url) + '</strong> &mdash; ' + esc(msg) +
+        (isCors ? '<br><span style="opacity:0.7">CORS issue? The feed server must allow cross-origin requests, or host the timeline on the same origin.</span>' : '');
+    }
+
+    function clearFeedError(url) {
+      const id = 'err-' + btoa(url).replace(/[^a-z0-9]/gi, '');
+      const el = document.getElementById(id);
+      if (el) el.remove();
+    }
+
+    // ── Status bar ────────────────────────────────────────────────────────────
+    function updateStatus() {
+      const el = document.getElementById('status-text');
+      const total = allEntries.length;
+      const feedCount = feeds.length;
+      if (feedCount === 0) {
+        el.textContent = 'No feeds connected';
+        return;
+      }
+      const loading = Object.values(feedStatuses).filter(function (s) { return s === 'loading'; }).length;
+      const errors  = Object.values(feedStatuses).filter(function (s) { return s === 'error'; }).length;
+      let msg = total + ' ' + (total === 1 ? 'entry' : 'entries');
+      msg += ' from ' + feedCount + ' ' + (feedCount === 1 ? 'feed' : 'feeds');
+      if (loading > 0) msg += ' &middot; <em>fetching ' + loading + '…</em>';
+      if (errors > 0)  msg += ' &middot; <span style="color:#cc6666">' + errors + ' failed</span>';
+      el.innerHTML = '<span class="status-count">' + msg + '</span>';
+    }
+
+    // ── localStorage cache ────────────────────────────────────────────────────
+    function saveCachedEntries() {
+      const data = {};
+      Object.entries(cachedEntries).forEach(function (kv) {
+        data[kv[0]] = kv[1].map(function (e) {
+          return Object.assign({}, e, { published: e.published.toISOString() });
+        });
+      });
+      try { localStorage.setItem('ie-timeline-cache', JSON.stringify(data)); } catch (_) {}
+    }
+
+    function loadCachedEntries() {
+      try {
+        const raw = localStorage.getItem('ie-timeline-cache');
+        if (!raw) return;
+        const data = JSON.parse(raw);
+        Object.entries(data).forEach(function (kv) {
+          cachedEntries[kv[0]] = kv[1].map(function (e) {
+            return Object.assign({}, e, { published: new Date(e.published) });
+          });
+        });
+      } catch (_) {}
+    }
+
+    // ── Add feed button ───────────────────────────────────────────────────────
+    document.getElementById('btn-add-feed').addEventListener('click', function () {
+      const input = document.getElementById('add-feed-input');
+      const val = input.value.trim();
+      if (!val || !val.startsWith('http')) return;
+      // Accept either a site URL or a direct feed URL
+      const url = val.endsWith('.xml') ? val : val.replace(/\/$/, '') + '/feed.xml';
+      addFeed(url, hostnameFromUrl(val));
+      input.value = '';
+    });
+
+    document.getElementById('add-feed-input').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') document.getElementById('btn-add-feed').click();
+    });
+
+    document.getElementById('btn-refresh').addEventListener('click', function () {
+      clearTimeout(refreshTimer);
+      fetchAllFeeds().then(scheduledRefresh);
+    });
+
+    // ── Init ──────────────────────────────────────────────────────────────────
+    boot();
+  })();
+  </script>
+</body>
+</html>
+"#.to_string()
 }
 
 // ── Entry type label ──────────────────────────────────────────────────────────

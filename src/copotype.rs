@@ -105,7 +105,9 @@ pub fn detect_copotype(ch: &Character) -> Copotype {
 
     for &copotype in Copotype::all() {
         let info = copotype.info();
-        let score: i16 = info.primary_skills.iter()
+        let score: i16 = info
+            .primary_skills
+            .iter()
             .map(|&s| ch.effective_skill(s) as i16)
             .sum();
         if score > best_score {
@@ -125,36 +127,69 @@ pub fn format_copotype(copotype: Copotype, ch: &Character) -> String {
 
     let mut out = String::new();
 
-    out.push_str(&format!("\n{}\n", "╔══════════════════════════════════════╗".cyan()));
-    out.push_str(&format!("{}  {:<36}{}\n",
+    out.push_str(&format!(
+        "\n{}\n",
+        "╔══════════════════════════════════════╗".cyan()
+    ));
+    out.push_str(&format!(
+        "{}  {:<36}{}\n",
         "║".cyan(),
         format!("COPOTYPE: {}", info.name.to_uppercase()),
-        "║".cyan()));
-    out.push_str(&format!("{}  {:<36}{}\n",
+        "║".cyan()
+    ));
+    out.push_str(&format!(
+        "{}  {:<36}{}\n",
         "║".cyan(),
         info.title.italic().to_string(),
-        "║".cyan()));
-    out.push_str(&format!("{}\n", "╠══════════════════════════════════════╣".cyan()));
-    out.push_str(&format!("{}  {:<36}{}\n",
+        "║".cyan()
+    ));
+    out.push_str(&format!(
+        "{}\n",
+        "╠══════════════════════════════════════╣".cyan()
+    ));
+    out.push_str(&format!(
+        "{}  {:<36}{}\n",
         "║".cyan(),
         info.description,
-        "║".cyan()));
-    out.push_str(&format!("{}\n", "╠══════════════════════════════════════╣".cyan()));
-    out.push_str(&format!("{}  Primary Skills:{:<20}{}\n",
-        "║".cyan(), "", "║".cyan()));
-    out.push_str(&format!("{}    {:<16} {:<18}{}\n",
+        "║".cyan()
+    ));
+    out.push_str(&format!(
+        "{}\n",
+        "╠══════════════════════════════════════╣".cyan()
+    ));
+    out.push_str(&format!(
+        "{}  Primary Skills:{:<20}{}\n",
+        "║".cyan(),
+        "",
+        "║".cyan()
+    ));
+    out.push_str(&format!(
+        "{}    {:<16} {:<18}{}\n",
         "║".cyan(),
         format!("{}", s1),
         format_skill_bar(v1),
-        "║".cyan()));
-    out.push_str(&format!("{}    {:<16} {:<18}{}\n",
+        "║".cyan()
+    ));
+    out.push_str(&format!(
+        "{}    {:<16} {:<18}{}\n",
         "║".cyan(),
         format!("{}", s2),
         format_skill_bar(v2),
-        "║".cyan()));
-    out.push_str(&format!("{}\n", "╠══════════════════════════════════════╣".cyan()));
-    out.push_str(&format!("{}  \"{}\"\n", "║".cyan(), info.catchphrase.italic()));
-    out.push_str(&format!("{}\n", "╚══════════════════════════════════════╝".cyan()));
+        "║".cyan()
+    ));
+    out.push_str(&format!(
+        "{}\n",
+        "╠══════════════════════════════════════╣".cyan()
+    ));
+    out.push_str(&format!(
+        "{}  \"{}\"\n",
+        "║".cyan(),
+        info.catchphrase.italic()
+    ));
+    out.push_str(&format!(
+        "{}\n",
+        "╚══════════════════════════════════════╝".cyan()
+    ));
 
     out
 }

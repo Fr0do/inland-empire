@@ -274,7 +274,8 @@ pub fn generate_storybook(
 
     let entry_count = entries.len();
 
-    format!(r#"<!DOCTYPE html>
+    format!(
+        r#"<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">

@@ -43,14 +43,14 @@ pub enum Achievement {
     Grinder,         // 500 total checks
     LevelFive,       // Reach level 5
     LevelTen,        // Reach level 10
-    Mixologist,      // Use all 6 base substances (coffee, cigarette, alcohol, speed, nostalgia, pyrholidon)
-    PsychonautInit,  // Use LSD or Mushrooms
-    ThoughtLeader,   // Internalize 5 thoughts
-    WellDressed,     // Have all 6 equipment slots occupied
-    NightOwl,        // Pass a check during Night (0–5 AM)
-    CoffeeAddict,    // Use 10 coffees total
-    IronWill,        // 10 success streak
-    Unlucky,         // 5 fail streak
+    Mixologist, // Use all 6 base substances (coffee, cigarette, alcohol, speed, nostalgia, pyrholidon)
+    PsychonautInit, // Use LSD or Mushrooms
+    ThoughtLeader, // Internalize 5 thoughts
+    WellDressed, // Have all 6 equipment slots occupied
+    NightOwl,   // Pass a check during Night (0–5 AM)
+    CoffeeAddict, // Use 10 coffees total
+    IronWill,   // 10 success streak
+    Unlucky,    // 5 fail streak
     JackOfAllTrades, // Pass a check with 12+ different skills
 }
 
@@ -191,20 +191,29 @@ pub fn check_achievements(ch: &Character) -> Vec<Achievement> {
     let mut earned = Vec::new();
 
     // FirstBlood — any critical success in history
-    if ch.check_history.iter().any(|r| r.roll.0 == 6 && r.roll.1 == 6) {
+    if ch
+        .check_history
+        .iter()
+        .any(|r| r.roll.0 == 6 && r.roll.1 == 6)
+    {
         earned.push(Achievement::FirstBlood);
     }
 
     // SnakeEyes — any critical failure in history
-    if ch.check_history.iter().any(|r| r.roll.0 == 1 && r.roll.1 == 1) {
+    if ch
+        .check_history
+        .iter()
+        .any(|r| r.roll.0 == 1 && r.roll.1 == 1)
+    {
         earned.push(Achievement::SnakeEyes);
     }
 
     // Survivor — journal contains a game over entry (health or morale hit 0)
     // We detect this by looking for GameOver entry type in the journal
-    let had_game_over = ch.journal.iter().any(|e| {
-        matches!(e.entry_type, crate::journal::EntryType::GameOver)
-    });
+    let had_game_over = ch
+        .journal
+        .iter()
+        .any(|e| matches!(e.entry_type, crate::journal::EntryType::GameOver));
     if had_game_over {
         earned.push(Achievement::Survivor);
     }
@@ -230,18 +239,32 @@ pub fn check_achievements(ch: &Character) -> Vec<Achievement> {
     // Mixologist — used all 6 base substances (coffee, cigarette, alcohol, speed, nostalgia, pyrholidon)
     // We detect via journal SubstanceUsed entries
     let base_substances = [
-        "Coffee", "Cigarette", "Alcohol", "Speed", "Nostalgia", "Pyrholidon",
+        "Coffee",
+        "Cigarette",
+        "Alcohol",
+        "Speed",
+        "Nostalgia",
+        "Pyrholidon",
     ];
-    let used_substances: HashSet<&str> = ch.journal.iter()
+    let used_substances: HashSet<&str> = ch
+        .journal
+        .iter()
         .filter(|e| matches!(e.entry_type, crate::journal::EntryType::SubstanceUsed))
-        .flat_map(|e| base_substances.iter().filter(|&&s| e.content.contains(s)).copied())
+        .flat_map(|e| {
+            base_substances
+                .iter()
+                .filter(|&&s| e.content.contains(s))
+                .copied()
+        })
         .collect();
     if used_substances.len() >= 6 {
         earned.push(Achievement::Mixologist);
     }
 
     // PsychonautInit — used LSD or Mushrooms
-    let used_psychedelic = ch.journal.iter()
+    let used_psychedelic = ch
+        .journal
+        .iter()
         .filter(|e| matches!(e.entry_type, crate::journal::EntryType::SubstanceUsed))
         .any(|e| e.content.contains("LSD") || e.content.contains("Mushrooms"));
     if used_psychedelic {
@@ -250,10 +273,14 @@ pub fn check_achievements(ch: &Character) -> Vec<Achievement> {
 
     // ThoughtLeader — 5 internalized thoughts (cumulative, including forgotten ones)
     // Count both current internalized + journal entries for ThoughtInternalized
-    let internalized_journal = ch.journal.iter()
+    let internalized_journal = ch
+        .journal
+        .iter()
         .filter(|e| matches!(e.entry_type, crate::journal::EntryType::ThoughtInternalized))
         .count();
-    let currently_internalized = ch.thoughts.iter()
+    let currently_internalized = ch
+        .thoughts
+        .iter()
         .filter(|t| matches!(t.phase, ThoughtPhase::Internalized))
         .count();
     // Use journal count as cumulative (journal is append-only)
@@ -263,10 +290,17 @@ pub fn check_achievements(ch: &Character) -> Vec<Achievement> {
 
     // WellDressed — all 6 slots equipped simultaneously
     let all_slots = [
-        EquipSlot::Hat, EquipSlot::Jacket, EquipSlot::Shirt,
-        EquipSlot::Pants, EquipSlot::Shoes, EquipSlot::Accessory,
+        EquipSlot::Hat,
+        EquipSlot::Jacket,
+        EquipSlot::Shirt,
+        EquipSlot::Pants,
+        EquipSlot::Shoes,
+        EquipSlot::Accessory,
     ];
-    if all_slots.iter().all(|slot| ch.loadout.slots.get(slot).is_some()) {
+    if all_slots
+        .iter()
+        .all(|slot| ch.loadout.slots.contains_key(slot))
+    {
         earned.push(Achievement::WellDressed);
     }
 
@@ -282,8 +316,13 @@ pub fn check_achievements(ch: &Character) -> Vec<Achievement> {
     }
 
     // CoffeeAddict — 10 coffee uses via journal
-    let coffee_uses = ch.journal.iter()
-        .filter(|e| matches!(e.entry_type, crate::journal::EntryType::SubstanceUsed) && e.content.contains("Coffee"))
+    let coffee_uses = ch
+        .journal
+        .iter()
+        .filter(|e| {
+            matches!(e.entry_type, crate::journal::EntryType::SubstanceUsed)
+                && e.content.contains("Coffee")
+        })
         .count();
     if coffee_uses >= 10 {
         earned.push(Achievement::CoffeeAddict);
@@ -300,7 +339,9 @@ pub fn check_achievements(ch: &Character) -> Vec<Achievement> {
     }
 
     // JackOfAllTrades — 12+ distinct skills with at least one success
-    let distinct_passed_skills: HashSet<Skill> = ch.check_history.iter()
+    let distinct_passed_skills: HashSet<Skill> = ch
+        .check_history
+        .iter()
         .filter(|r| r.success)
         .map(|r| r.skill)
         .collect();
@@ -315,7 +356,12 @@ fn max_success_streak(history: &[crate::character::CheckRecord]) -> usize {
     let mut max = 0usize;
     let mut cur = 0usize;
     for r in history {
-        if r.success { cur += 1; max = max.max(cur); } else { cur = 0; }
+        if r.success {
+            cur += 1;
+            max = max.max(cur);
+        } else {
+            cur = 0;
+        }
     }
     max
 }
@@ -324,7 +370,12 @@ fn max_fail_streak(history: &[crate::character::CheckRecord]) -> usize {
     let mut max = 0usize;
     let mut cur = 0usize;
     for r in history {
-        if !r.success { cur += 1; max = max.max(cur); } else { cur = 0; }
+        if !r.success {
+            cur += 1;
+            max = max.max(cur);
+        } else {
+            cur = 0;
+        }
     }
     max
 }
@@ -335,13 +386,21 @@ pub fn format_achievements(earned: &HashSet<Achievement>) -> String {
     out.push_str(&format!("\n{}\n\n", "ACHIEVEMENTS".bold()));
 
     // Group by rarity in display order
-    let order = [Rarity::Legendary, Rarity::Rare, Rarity::Uncommon, Rarity::Common];
+    let order = [
+        Rarity::Legendary,
+        Rarity::Rare,
+        Rarity::Uncommon,
+        Rarity::Common,
+    ];
     for rarity in &order {
-        let group: Vec<Achievement> = Achievement::all().iter()
+        let group: Vec<Achievement> = Achievement::all()
+            .iter()
             .copied()
             .filter(|a| a.info().rarity == *rarity)
             .collect();
-        if group.is_empty() { continue; }
+        if group.is_empty() {
+            continue;
+        }
         out.push_str(&format!("  {}\n", rarity.color(rarity.label())));
         for ach in &group {
             let info = ach.info();
@@ -349,7 +408,8 @@ pub fn format_achievements(earned: &HashSet<Achievement>) -> String {
                 let name = rarity.color(&format!("{} {}", info.icon, info.name));
                 out.push_str(&format!("  {}  {}\n", name, info.description.dimmed()));
             } else {
-                out.push_str(&format!("  {}  {}\n",
+                out.push_str(&format!(
+                    "  {}  {}\n",
                     format!("  {}", info.name).dimmed(),
                     info.description.dimmed(),
                 ));

@@ -55,26 +55,59 @@ pub enum Skill {
 impl Skill {
     pub fn attribute(&self) -> Attribute {
         match self {
-            Skill::Logic | Skill::Encyclopedia | Skill::Rhetoric
-            | Skill::Drama | Skill::Conceptualization | Skill::VisualCalculus => Attribute::Intellect,
-            Skill::Volition | Skill::InlandEmpire | Skill::Empathy
-            | Skill::Authority | Skill::Esprit | Skill::Suggestion => Attribute::Psyche,
-            Skill::Endurance | Skill::PainThreshold | Skill::PhysicalInstrument
-            | Skill::Electrochemistry | Skill::Shivers | Skill::HalfLight => Attribute::Physique,
-            Skill::HandEyeCoordination | Skill::Perception | Skill::ReactionSpeed
-            | Skill::Savoir | Skill::Interfacing | Skill::Composure => Attribute::Motorics,
+            Skill::Logic
+            | Skill::Encyclopedia
+            | Skill::Rhetoric
+            | Skill::Drama
+            | Skill::Conceptualization
+            | Skill::VisualCalculus => Attribute::Intellect,
+            Skill::Volition
+            | Skill::InlandEmpire
+            | Skill::Empathy
+            | Skill::Authority
+            | Skill::Esprit
+            | Skill::Suggestion => Attribute::Psyche,
+            Skill::Endurance
+            | Skill::PainThreshold
+            | Skill::PhysicalInstrument
+            | Skill::Electrochemistry
+            | Skill::Shivers
+            | Skill::HalfLight => Attribute::Physique,
+            Skill::HandEyeCoordination
+            | Skill::Perception
+            | Skill::ReactionSpeed
+            | Skill::Savoir
+            | Skill::Interfacing
+            | Skill::Composure => Attribute::Motorics,
         }
     }
 
     pub fn all() -> &'static [Skill] {
         &[
-            Skill::Logic, Skill::Encyclopedia, Skill::Rhetoric, Skill::Drama,
-            Skill::Conceptualization, Skill::VisualCalculus, Skill::Volition,
-            Skill::InlandEmpire, Skill::Empathy, Skill::Authority, Skill::Esprit,
-            Skill::Suggestion, Skill::Endurance, Skill::PainThreshold,
-            Skill::PhysicalInstrument, Skill::Electrochemistry, Skill::Shivers,
-            Skill::HalfLight, Skill::HandEyeCoordination, Skill::Perception,
-            Skill::ReactionSpeed, Skill::Savoir, Skill::Interfacing, Skill::Composure,
+            Skill::Logic,
+            Skill::Encyclopedia,
+            Skill::Rhetoric,
+            Skill::Drama,
+            Skill::Conceptualization,
+            Skill::VisualCalculus,
+            Skill::Volition,
+            Skill::InlandEmpire,
+            Skill::Empathy,
+            Skill::Authority,
+            Skill::Esprit,
+            Skill::Suggestion,
+            Skill::Endurance,
+            Skill::PainThreshold,
+            Skill::PhysicalInstrument,
+            Skill::Electrochemistry,
+            Skill::Shivers,
+            Skill::HalfLight,
+            Skill::HandEyeCoordination,
+            Skill::Perception,
+            Skill::ReactionSpeed,
+            Skill::Savoir,
+            Skill::Interfacing,
+            Skill::Composure,
         ]
     }
 

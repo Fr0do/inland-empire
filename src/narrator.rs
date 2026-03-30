@@ -2,7 +2,7 @@ use crate::character::Character;
 use crate::checks::CheckResult;
 use crate::time::TimeOfDay;
 use chrono::Utc;
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 
 #[derive(Debug, Clone)]
 pub enum NarratorTrigger {

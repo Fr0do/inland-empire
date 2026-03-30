@@ -101,7 +101,11 @@ pub fn catalog() -> Vec<Equipment> {
             "Thought Helmet",
             EquipSlot::Hat,
             "A tinfoil hat lined with copper wire. It blocks the distracting signals from Slack.",
-            &[(Skill::Conceptualization, 1), (Skill::InlandEmpire, 1), (Skill::Interfacing, -1)],
+            &[
+                (Skill::Conceptualization, 1),
+                (Skill::InlandEmpire, 1),
+                (Skill::Interfacing, -1),
+            ],
         ),
         Equipment::new(
             "headphones-nc",
@@ -123,21 +127,33 @@ pub fn catalog() -> Vec<Equipment> {
             "Black Hoodie",
             EquipSlot::Jacket,
             "The uniform of the late-night coder. Stains of unknown origin.",
-            &[(Skill::Composure, 1), (Skill::Shivers, 1), (Skill::Authority, -1)],
+            &[
+                (Skill::Composure, 1),
+                (Skill::Shivers, 1),
+                (Skill::Authority, -1),
+            ],
         ),
         Equipment::new(
             "blazer-tech",
             "Tech Lead Blazer",
             EquipSlot::Jacket,
             "You look like you make decisions. Important ones.",
-            &[(Skill::Authority, 2), (Skill::Rhetoric, 1), (Skill::Electrochemistry, -1)],
+            &[
+                (Skill::Authority, 2),
+                (Skill::Rhetoric, 1),
+                (Skill::Electrochemistry, -1),
+            ],
         ),
         Equipment::new(
             "vest-tactical",
             "Tactical Cargo Vest",
             EquipSlot::Jacket,
             "Seventeen pockets. USB drives in each one.",
-            &[(Skill::Encyclopedia, 1), (Skill::HandEyeCoordination, 1), (Skill::Savoir, -1)],
+            &[
+                (Skill::Encyclopedia, 1),
+                (Skill::HandEyeCoordination, 1),
+                (Skill::Savoir, -1),
+            ],
         ),
         // Shirts
         Equipment::new(
@@ -145,21 +161,33 @@ pub fn catalog() -> Vec<Equipment> {
             "Rust Evangelism T-Shirt",
             EquipSlot::Shirt,
             "'Fearless Concurrency' printed on the front. Coffee stain on the back.",
-            &[(Skill::Logic, 1), (Skill::Rhetoric, 1), (Skill::Empathy, -1)],
+            &[
+                (Skill::Logic, 1),
+                (Skill::Rhetoric, 1),
+                (Skill::Empathy, -1),
+            ],
         ),
         Equipment::new(
             "shirt-hawaiian",
             "Hawaiian Shirt",
             EquipSlot::Shirt,
             "Loud. Confident. You're either a genius or unhinged.",
-            &[(Skill::Suggestion, 1), (Skill::Drama, 1), (Skill::Composure, -1)],
+            &[
+                (Skill::Suggestion, 1),
+                (Skill::Drama, 1),
+                (Skill::Composure, -1),
+            ],
         ),
         Equipment::new(
             "turtleneck",
             "Black Turtleneck",
             EquipSlot::Shirt,
             "You're not cosplaying. You're channeling.",
-            &[(Skill::Conceptualization, 1), (Skill::Savoir, 1), (Skill::Esprit, -1)],
+            &[
+                (Skill::Conceptualization, 1),
+                (Skill::Savoir, 1),
+                (Skill::Esprit, -1),
+            ],
         ),
         // Pants
         Equipment::new(
@@ -174,14 +202,22 @@ pub fn catalog() -> Vec<Equipment> {
             "Grey Sweatpants",
             EquipSlot::Pants,
             "Maximum comfort. Minimum respect.",
-            &[(Skill::Endurance, 1), (Skill::PhysicalInstrument, 1), (Skill::Authority, -2)],
+            &[
+                (Skill::Endurance, 1),
+                (Skill::PhysicalInstrument, 1),
+                (Skill::Authority, -2),
+            ],
         ),
         Equipment::new(
             "cargo-pants",
             "Cargo Pants",
             EquipSlot::Pants,
             "More pockets than your IDE has panels.",
-            &[(Skill::Encyclopedia, 1), (Skill::Interfacing, 1), (Skill::Savoir, -1)],
+            &[
+                (Skill::Encyclopedia, 1),
+                (Skill::Interfacing, 1),
+                (Skill::Savoir, -1),
+            ],
         ),
         // Shoes
         Equipment::new(
@@ -196,14 +232,23 @@ pub fn catalog() -> Vec<Equipment> {
             "Steel-Toe Boots",
             EquipSlot::Shoes,
             "For when you need to kick the deployment server.",
-            &[(Skill::PhysicalInstrument, 1), (Skill::HalfLight, 1), (Skill::Savoir, -1)],
+            &[
+                (Skill::PhysicalInstrument, 1),
+                (Skill::HalfLight, 1),
+                (Skill::Savoir, -1),
+            ],
         ),
         Equipment::new(
             "sandals-socks",
             "Socks with Sandals",
             EquipSlot::Shoes,
             "You've transcended caring. True freedom.",
-            &[(Skill::InlandEmpire, 1), (Skill::Volition, 1), (Skill::Esprit, -1), (Skill::Authority, -1)],
+            &[
+                (Skill::InlandEmpire, 1),
+                (Skill::Volition, 1),
+                (Skill::Esprit, -1),
+                (Skill::Authority, -1),
+            ],
         ),
         // Accessories
         Equipment::new(
@@ -218,14 +263,22 @@ pub fn catalog() -> Vec<Equipment> {
             "Mechanical Keyboard",
             EquipSlot::Accessory,
             "Cherry MX Blues. Everyone hates you. You don't care.",
-            &[(Skill::HandEyeCoordination, 1), (Skill::Electrochemistry, 1), (Skill::Empathy, -1)],
+            &[
+                (Skill::HandEyeCoordination, 1),
+                (Skill::Electrochemistry, 1),
+                (Skill::Empathy, -1),
+            ],
         ),
         Equipment::new(
             "energy-drink",
             "Energy Drink (warm)",
             EquipSlot::Accessory,
             "It's been on your desk since Tuesday. You drink it anyway.",
-            &[(Skill::ReactionSpeed, 1), (Skill::Endurance, 1), (Skill::Composure, -1)],
+            &[
+                (Skill::ReactionSpeed, 1),
+                (Skill::Endurance, 1),
+                (Skill::Composure, -1),
+            ],
         ),
     ]
 }
@@ -233,7 +286,12 @@ pub fn catalog() -> Vec<Equipment> {
 pub fn starting_loadout() -> Loadout {
     let items = catalog();
     let mut loadout = Loadout::default();
-    let starting_ids = ["backwards-cap", "hoodie-black", "jeans-debug", "sneakers-silent"];
+    let starting_ids = [
+        "backwards-cap",
+        "hoodie-black",
+        "jeans-debug",
+        "sneakers-silent",
+    ];
     for item in items {
         if starting_ids.contains(&item.id.as_str()) {
             loadout.equip(item);
@@ -290,10 +348,7 @@ pub fn format_loadout(loadout: &Loadout) -> String {
                     item.name.bold(),
                     mods_str
                 ));
-                out.push_str(&format!(
-                    "             {}\n",
-                    item.description.dimmed()
-                ));
+                out.push_str(&format!("             {}\n", item.description.dimmed()));
             }
         }
     }

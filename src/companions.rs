@@ -59,7 +59,8 @@ impl Companion {
             Companion::Cuno => CompanionInfo {
                 name: "Cuno",
                 title: "Street Kid",
-                description: "Fast. Loud. Finds things before you knew you were looking. Cuno doesn't care.",
+                description:
+                    "Fast. Loud. Finds things before you knew you were looking. Cuno doesn't care.",
                 model: "haiku",
             },
         }
