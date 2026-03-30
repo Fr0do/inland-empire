@@ -8,6 +8,7 @@ mod copotype;
 mod display;
 mod equipment;
 mod journal;
+mod narrator;
 mod portrait;
 mod skills;
 mod stats;
@@ -390,6 +391,13 @@ fn cmd_hook_check(tool: &str, context: &str) {
         "companion": companion_line
     });
     println!("{}", json);
+
+    // Narrator events — structured prompts for the agent to weave into its response
+    let narrator_events = narrator::narrator_triggers(&result, &ch, tool, &ctx);
+    for event in &narrator_events {
+        eprintln!("{}", serde_json::to_string(&event.to_json()).unwrap_or_default());
+    }
+
     ch.save().ok();
 }
 
