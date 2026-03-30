@@ -148,6 +148,9 @@ enum Commands {
         /// Output directory (default: {name}-site)
         #[arg(short, long)]
         output: Option<String>,
+        /// Deploy to GitHub Pages (push to gh-pages branch)
+        #[arg(long)]
+        deploy: bool,
     },
     /// Generate a timeline aggregator to follow other players' journals
     #[command(name = "timeline")]
@@ -216,7 +219,11 @@ fn main() {
         Commands::Portrait { compact } => cmd_portrait(compact),
         Commands::Copotype => cmd_copotype(),
         Commands::Storybook { output } => cmd_storybook(output),
-        Commands::Publish { base_url, output } => cmd_publish(base_url, output),
+        Commands::Publish {
+            base_url,
+            output,
+            deploy,
+        } => cmd_publish(base_url, output, deploy),
         Commands::Timeline { url, output } => cmd_timeline(&url, output),
         Commands::Stats => cmd_stats(),
         Commands::Cases => cmd_cases(),
@@ -901,7 +908,7 @@ fn cmd_storybook(output: Option<String>) {
     println!("Storybook exported to {}", path.bold());
 }
 
-fn cmd_publish(base_url: String, output: Option<String>) {
+fn cmd_publish(base_url: String, output: Option<String>, deploy: bool) {
     use colored::Colorize;
     let ch = match Character::load_active() {
         Ok(c) => c,
@@ -932,6 +939,197 @@ fn cmd_publish(base_url: String, output: Option<String>) {
     println!("Site generated: {} ({} files)", site_dir.bold(), count);
     println!("  {} {site_dir}/index.html", "→".dimmed());
     println!("  {} {site_dir}/feed.xml", "→".dimmed());
+
+    if deploy {
+        deploy_to_gh_pages(&site_dir, &ch.name);
+        // Clean up local site dir after successful deploy
+        if let Err(e) = std::fs::remove_dir_all(&site_dir) {
+            eprintln!("Warning: could not clean up {site_dir}: {e}");
+        }
+    }
+}
+
+fn deploy_to_gh_pages(site_dir: &str, character_name: &str) {
+    use colored::Colorize;
+    use std::process::Command;
+
+    println!("{}", "Deploying to GitHub Pages...".yellow());
+
+    // 1. Check git is available
+    if Command::new("git").arg("--version").output().is_err() {
+        eprintln!("Error: git is not available. Install git and try again.");
+        return;
+    }
+
+    // 2. Get remote URL
+    let remote_out = match Command::new("git")
+        .args(["remote", "get-url", "origin"])
+        .output()
+    {
+        Ok(o) if o.status.success() => o,
+        _ => {
+            eprintln!("Error: could not get remote URL. Make sure 'origin' is configured.");
+            return;
+        }
+    };
+    let remote_url = String::from_utf8_lossy(&remote_out.stdout)
+        .trim()
+        .to_string();
+    println!("  Remote: {}", remote_url.dimmed());
+
+    // 5. Read git user config from main repo
+    let git_name = Command::new("git")
+        .args(["config", "user.name"])
+        .output()
+        .ok()
+        .and_then(|o| {
+            if o.status.success() {
+                Some(String::from_utf8_lossy(&o.stdout).trim().to_string())
+            } else {
+                None
+            }
+        })
+        .unwrap_or_else(|| "Inland Empire".to_string());
+    let git_email = Command::new("git")
+        .args(["config", "user.email"])
+        .output()
+        .ok()
+        .and_then(|o| {
+            if o.status.success() {
+                Some(String::from_utf8_lossy(&o.stdout).trim().to_string())
+            } else {
+                None
+            }
+        })
+        .unwrap_or_else(|| "ie@example.com".to_string());
+
+    // 3. Create temp directory with unique name
+    let tmp_base = std::env::temp_dir();
+    let tmp_dir = tmp_base.join(format!(
+        "ie-deploy-{}",
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_millis())
+            .unwrap_or(0)
+    ));
+    if let Err(e) = std::fs::create_dir_all(&tmp_dir) {
+        eprintln!("Error: could not create temp directory: {e}");
+        return;
+    }
+    println!("  Temp dir: {}", tmp_dir.display().to_string().dimmed());
+
+    // 6. Copy all files from site_dir into temp dir
+    let site_path = std::path::Path::new(site_dir);
+    if let Err(e) = copy_dir_all(site_path, &tmp_dir) {
+        eprintln!("Error: could not copy site files: {e}");
+        let _ = std::fs::remove_dir_all(&tmp_dir);
+        return;
+    }
+    println!("  Copied site files");
+
+    // Helper: run a git command in the temp dir
+    let run_git = |args: &[&str]| -> Result<(), String> {
+        let status = Command::new("git")
+            .args(args)
+            .current_dir(&tmp_dir)
+            .status()
+            .map_err(|e| e.to_string())?;
+        if status.success() {
+            Ok(())
+        } else {
+            Err(format!("git {:?} failed", args))
+        }
+    };
+
+    // 4. Init repo
+    if let Err(e) = run_git(&["init"]) {
+        eprintln!("Error: {e}");
+        let _ = std::fs::remove_dir_all(&tmp_dir);
+        return;
+    }
+
+    // Configure user in temp repo
+    let _ = Command::new("git")
+        .args(["config", "user.name", &git_name])
+        .current_dir(&tmp_dir)
+        .status();
+    let _ = Command::new("git")
+        .args(["config", "user.email", &git_email])
+        .current_dir(&tmp_dir)
+        .status();
+
+    // 7. Stage all files
+    if let Err(e) = run_git(&["add", "-A"]) {
+        eprintln!("Error: {e}");
+        let _ = std::fs::remove_dir_all(&tmp_dir);
+        return;
+    }
+
+    // 7. Commit
+    let msg = format!("Deploy {}'s journal", character_name);
+    if let Err(e) = run_git(&["commit", "-m", &msg]) {
+        eprintln!("Error: {e}");
+        let _ = std::fs::remove_dir_all(&tmp_dir);
+        return;
+    }
+    println!("  Committed: {}", msg.dimmed());
+
+    // 8. Add remote origin
+    if let Err(e) = run_git(&["remote", "add", "origin", &remote_url]) {
+        eprintln!("Error: {e}");
+        let _ = std::fs::remove_dir_all(&tmp_dir);
+        return;
+    }
+
+    // 9. Force push to gh-pages
+    println!("  Pushing to gh-pages...");
+    if let Err(e) = run_git(&["push", "--force", "origin", "HEAD:gh-pages"]) {
+        eprintln!("Error: {e}");
+        let _ = std::fs::remove_dir_all(&tmp_dir);
+        return;
+    }
+
+    // 10. Clean up temp dir
+    let _ = std::fs::remove_dir_all(&tmp_dir);
+
+    // 11. Print success with GitHub Pages URL
+    let pages_url = remote_url_to_pages_url(&remote_url);
+    println!("{}", "Deployed! Your journal is live at:".green());
+    println!("{}", format!("  {}", pages_url).green().bold());
+}
+
+fn copy_dir_all(src: &std::path::Path, dst: &std::path::Path) -> std::io::Result<()> {
+    std::fs::create_dir_all(dst)?;
+    for entry in std::fs::read_dir(src)? {
+        let entry = entry?;
+        let ty = entry.file_type()?;
+        let dest_path = dst.join(entry.file_name());
+        if ty.is_dir() {
+            copy_dir_all(&entry.path(), &dest_path)?;
+        } else {
+            std::fs::copy(entry.path(), dest_path)?;
+        }
+    }
+    Ok(())
+}
+
+fn remote_url_to_pages_url(remote: &str) -> String {
+    // Handle SSH: git@github.com:user/repo.git
+    // Handle HTTPS: https://github.com/user/repo.git
+    let stripped = remote.trim_end_matches(".git");
+    if let Some(rest) = stripped.strip_prefix("git@github.com:") {
+        let parts: Vec<&str> = rest.splitn(2, '/').collect();
+        if parts.len() == 2 {
+            return format!("https://{}.github.io/{}/", parts[0], parts[1]);
+        }
+    }
+    if let Some(rest) = stripped.strip_prefix("https://github.com/") {
+        let parts: Vec<&str> = rest.splitn(2, '/').collect();
+        if parts.len() == 2 {
+            return format!("https://{}.github.io/{}/", parts[0], parts[1]);
+        }
+    }
+    format!("{} (gh-pages branch)", remote)
 }
 
 fn cmd_timeline(url: &str, output: Option<String>) {
