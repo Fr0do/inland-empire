@@ -111,3 +111,15 @@ pub fn status_line(ch: &Character) -> String {
         ch.health, ch.max_health, ch.morale, ch.max_morale,
         time.icon(), time.label())
 }
+
+pub fn status_oneline(ch: &Character) -> String {
+    let time = TimeOfDay::current();
+    let hearts = "❤".repeat(ch.health as usize) + &"🖤".repeat((ch.max_health - ch.health) as usize);
+    let sig = ch.signature_skill.map(|s| format!("★{}", s)).unwrap_or_default();
+    format!("{} L{} {} {} 💭{}/{} XP:{}/{} {}{}",
+        ch.name, ch.level, hearts, time.icon(),
+        ch.morale, ch.max_morale,
+        ch.xp, ch.xp_to_next_level(),
+        sig,
+        if ch.skill_points > 0 { format!(" +{}SP", ch.skill_points) } else { String::new() })
+}

@@ -43,6 +43,9 @@ enum Commands {
         /// Show full body ASCII art portrait
         #[arg(long)]
         art: bool,
+        /// One-line compact output for status line integration
+        #[arg(long)]
+        oneline: bool,
     },
     /// List all saved profiles
     Profiles,
@@ -128,7 +131,7 @@ fn main() {
     let cli = Cli::parse();
     match cli.command {
         Commands::New { name, archetype, signature } => cmd_new(&name, &archetype, signature.as_deref()),
-        Commands::Status { art } => cmd_status(art),
+        Commands::Status { art, oneline } => cmd_status(art, oneline),
         Commands::Profiles => cmd_profiles(),
         Commands::Switch { name } => cmd_switch(&name),
         Commands::Check { tool, context, difficulty, skill } => cmd_check(&tool, &context, difficulty, skill.as_deref()),
@@ -166,9 +169,13 @@ fn cmd_new(name: &str, archetype: &str, signature: Option<&str>) {
     println!("Character '{}' created and set as active.", name);
 }
 
-fn cmd_status(art: bool) {
+fn cmd_status(art: bool, oneline: bool) {
     match Character::load_active() {
         Ok(ch) => {
+            if oneline {
+                println!("{}", display::status_oneline(&ch));
+                return;
+            }
             if art { print!("{}", portrait::render_character(&ch)); }
             println!("{}", display::character_sheet(&ch));
             let ct = copotype::detect_copotype(&ch);
