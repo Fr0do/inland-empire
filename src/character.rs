@@ -532,6 +532,32 @@ impl Character {
         Ok(())
     }
 
+    pub fn migrate(&mut self) {
+        // Migration: grant starting inventory to pre-substance characters
+        if self.inventory.is_empty() {
+            self.inventory = starting_inventory();
+        }
+        // Migration: initialize health/morale for pre-health characters
+        if self.max_health == 0 {
+            let physique = self.attributes.get(&Attribute::Physique).copied().unwrap_or(1);
+            self.max_health = (physique * 2).max(2);
+            self.health = self.max_health;
+        }
+        if self.max_morale == 0 {
+            let psyche = self.attributes.get(&Attribute::Psyche).copied().unwrap_or(1);
+            self.max_morale = (psyche * 2).max(2);
+            self.morale = self.max_morale;
+        }
+        // Migration: grant starting loadout to pre-equipment characters
+        if self.loadout.slots.is_empty() {
+            self.loadout = equipment::starting_loadout();
+        }
+        // Migration: populate cases for pre-cases characters
+        if self.cases.is_empty() {
+            self.cases = cases::all_cases();
+        }
+    }
+
     pub fn load(name: &str) -> Result<Self, String> {
         let path = profile_path(name);
         let lock_path = path.with_extension("lock");
@@ -541,33 +567,7 @@ impl Character {
         let data = std::fs::read_to_string(&path)
             .map_err(|_| format!("Character '{}' not found at {}", name, path.display()))?;
         let mut ch: Self = serde_json::from_str(&data).map_err(|e| e.to_string())?;
-        // Migration: grant starting inventory to pre-substance characters
-        if ch.inventory.is_empty() {
-            ch.inventory = starting_inventory();
-        }
-        // Migration: initialize health/morale for pre-health characters
-        if ch.max_health == 0 {
-            let physique = ch
-                .attributes
-                .get(&Attribute::Physique)
-                .copied()
-                .unwrap_or(1);
-            ch.max_health = (physique * 2).max(2);
-            ch.health = ch.max_health;
-        }
-        if ch.max_morale == 0 {
-            let psyche = ch.attributes.get(&Attribute::Psyche).copied().unwrap_or(1);
-            ch.max_morale = (psyche * 2).max(2);
-            ch.morale = ch.max_morale;
-        }
-        // Migration: grant starting loadout to pre-equipment characters
-        if ch.loadout.slots.is_empty() {
-            ch.loadout = equipment::starting_loadout();
-        }
-        // Migration: populate cases for pre-cases characters
-        if ch.cases.is_empty() {
-            ch.cases = cases::all_cases();
-        }
+        ch.migrate();
         Ok(ch)
     }
 

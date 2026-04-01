@@ -9,6 +9,7 @@ mod dashboard;
 mod display;
 mod equipment;
 mod journal;
+mod multiplayer;
 mod narrator;
 mod portrait;
 mod publish;
@@ -169,6 +170,34 @@ enum Commands {
     Cases,
     /// Show achievements and badges
     Achievements,
+    /// Export character as portable .ie.json file
+    Export {
+        /// Character name (default: active character)
+        name: Option<String>,
+        /// Output file path
+        #[arg(short, long)]
+        output: Option<String>,
+    },
+    /// Import character from .ie.json file
+    Import {
+        /// Path to .ie.json file
+        file: String,
+    },
+    /// Compare two characters side by side
+    Compare {
+        /// First character name
+        name1: String,
+        /// Second character name (default: active character)
+        name2: Option<String>,
+    },
+    /// Generate shareable SVG character card
+    Card {
+        /// Character name (default: active character)
+        name: Option<String>,
+        /// Output file path
+        #[arg(short, long)]
+        output: Option<String>,
+    },
     /// Launch web dashboard in browser
     Dashboard {
         /// Port to serve on (default: 3000)
@@ -238,6 +267,10 @@ fn main() {
         Commands::Stats => cmd_stats(),
         Commands::Cases => cmd_cases(),
         Commands::Achievements => cmd_achievements(),
+        Commands::Export { name, output } => cmd_export(name, output),
+        Commands::Import { file } => cmd_import(&file),
+        Commands::Compare { name1, name2 } => cmd_compare(&name1, name2.as_deref()),
+        Commands::Card { name, output } => cmd_card(name, output),
         Commands::Dashboard { port, no_open } => cmd_dashboard(port, no_open),
     }
 }
@@ -1226,6 +1259,82 @@ fn cmd_companions(model: Option<&str>) {
 fn cmd_dashboard(port: u16, no_open: bool) {
     match Character::load_active() {
         Ok(ch) => dashboard::serve(&ch, port, no_open),
+        Err(e) => eprintln!("{}", e),
+    }
+}
+
+fn cmd_export(name: Option<String>, output: Option<String>) {
+    let ch = match name {
+        Some(n) => Character::load(&n),
+        None => Character::load_active(),
+    };
+    match ch {
+        Ok(ch) => {
+            let json = multiplayer::export_character(&ch).expect("Failed to serialize");
+            let path = output.unwrap_or_else(|| format!("{}.ie.json", ch.name));
+            std::fs::write(&path, &json).expect("Failed to write file");
+            println!("Exported {} to {}", ch.name, path);
+        }
+        Err(e) => eprintln!("{}", e),
+    }
+}
+
+fn cmd_import(file: &str) {
+    let json = match std::fs::read_to_string(file) {
+        Ok(j) => j,
+        Err(e) => {
+            eprintln!("Failed to read {}: {}", file, e);
+            return;
+        }
+    };
+    match multiplayer::import_character(&json) {
+        Ok(mut ch) => {
+            let existing = list_profiles();
+            let original_name = ch.name.clone();
+            ch.name = multiplayer::resolve_name_conflict(&ch.name, &existing);
+            if ch.name != original_name {
+                println!("Name conflict: renamed to {}", ch.name);
+            }
+            ch.save().expect("Failed to save imported character");
+            println!("Imported {} from {}", ch.name, file);
+        }
+        Err(e) => eprintln!("{}", e),
+    }
+}
+
+fn cmd_compare(name1: &str, name2: Option<&str>) {
+    let left = match Character::load(name1) {
+        Ok(ch) => ch,
+        Err(e) => {
+            eprintln!("{}", e);
+            return;
+        }
+    };
+    let right = match name2 {
+        Some(n) => Character::load(n),
+        None => Character::load_active(),
+    };
+    match right {
+        Ok(right) => {
+            let comp = multiplayer::compare(&left, &right);
+            print!("{}", multiplayer::format_comparison(&comp));
+        }
+        Err(e) => eprintln!("{}", e),
+    }
+}
+
+fn cmd_card(name: Option<String>, output: Option<String>) {
+    let ch = match name {
+        Some(n) => Character::load(&n),
+        None => Character::load_active(),
+    };
+    match ch {
+        Ok(ch) => {
+            let svg = multiplayer::generate_card(&ch);
+            let path = output.unwrap_or_else(|| format!("{}-card.svg", ch.name));
+            std::fs::write(&path, &svg).expect("Failed to write SVG");
+            println!("Generated card: {}", path);
+        }
         Err(e) => eprintln!("{}", e),
     }
 }

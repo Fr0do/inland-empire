@@ -49,6 +49,7 @@ pub fn serve(initial_ch: &Character, port: u16, no_open: bool) {
             "/journal" => (page_journal(&ch), "text/html; charset=utf-8", 200),
             "/thoughts" => (page_thoughts(&ch), "text/html; charset=utf-8", 200),
             "/equipment" => (page_equipment(&ch), "text/html; charset=utf-8", 200),
+            "/leaderboard" => (page_leaderboard(), "text/html; charset=utf-8", 200),
             "/style.css" => (dashboard_css(&ch), "text/css", 200),
             "/api/character" => {
                 let json = serde_json::to_string_pretty(&ch).unwrap_or_else(|e| {
@@ -93,6 +94,7 @@ fn render_layout(ch: &Character, title: &str, active_nav: &str, body: &str) -> S
         ("/journal", "Journal"),
         ("/thoughts", "Thoughts"),
         ("/equipment", "Equipment"),
+        ("/leaderboard", "Leaderboard"),
     ];
 
     let nav_html: String = nav_items
@@ -740,7 +742,7 @@ footer {{
 
 // ── SVG Visualizations ────────────────────────────────────────────────────────
 
-fn svg_radar_chart(ch: &Character) -> String {
+pub(crate) fn svg_radar_chart(ch: &Character) -> String {
     let t = storybook::theme(ch.genre);
     let attrs = [
         Attribute::Intellect,
@@ -839,7 +841,7 @@ fn svg_radar_chart(ch: &Character) -> String {
     )
 }
 
-fn svg_portrait(ch: &Character) -> String {
+pub(crate) fn svg_portrait(ch: &Character) -> String {
     use crate::substances::Substance;
 
     let has_cigarette = ch.active_effects.iter().any(|e| e.substance == Substance::Cigarette);
@@ -1559,6 +1561,130 @@ fn page_equipment(ch: &Character) -> String {
     );
 
     render_layout(ch, "Equipment", "Equipment", &body)
+}
+
+fn page_leaderboard() -> String {
+    let profiles = crate::character::list_profiles();
+
+    struct Entry {
+        name: String,
+        archetype: String,
+        level: u32,
+        total_checks: usize,
+        pass_rate: f64,
+        best_streak: usize,
+        total_xp: u32,
+        critical_successes: usize,
+    }
+
+    let mut entries: Vec<Entry> = profiles
+        .iter()
+        .filter_map(|name| {
+            let ch = crate::character::Character::load(name).ok()?;
+            let stats = compute_stats(&ch);
+            let pass_rate = if stats.total_checks > 0 {
+                stats.successes as f64 / stats.total_checks as f64 * 100.0
+            } else {
+                0.0
+            };
+            Some(Entry {
+                name: ch.name,
+                archetype: ch.archetype,
+                level: ch.level,
+                total_checks: stats.total_checks,
+                pass_rate,
+                best_streak: stats.best_streak,
+                total_xp: stats.total_xp,
+                critical_successes: stats.critical_successes,
+            })
+        })
+        .collect();
+
+    // Sort by level descending, then by XP descending
+    entries.sort_by(|a, b| b.level.cmp(&a.level).then(b.total_xp.cmp(&a.total_xp)));
+
+    let mut rows = String::new();
+    for (i, e) in entries.iter().enumerate() {
+        let rank = i + 1;
+        let rate_str = if e.total_checks > 0 {
+            format!("{:.0}%", e.pass_rate)
+        } else {
+            "—".to_string()
+        };
+
+        // Medal emoji for top 3
+        let medal = match rank {
+            1 => "🥇 ",
+            2 => "🥈 ",
+            3 => "🥉 ",
+            _ => "",
+        };
+
+        rows.push_str(&format!(
+            r#"<tr>
+  <td style="text-align:center;font-weight:bold">{medal}{rank}</td>
+  <td style="color:var(--accent);font-weight:bold">{name}</td>
+  <td>{archetype}</td>
+  <td style="text-align:center;font-weight:bold">{level}</td>
+  <td style="text-align:center">{checks}</td>
+  <td style="text-align:center">{rate}</td>
+  <td style="text-align:center">{streak}</td>
+  <td style="text-align:center">{crits}</td>
+  <td style="text-align:right">{xp}</td>
+</tr>"#,
+            name = escape_html(&e.name),
+            archetype = escape_html(&e.archetype),
+            level = e.level,
+            checks = e.total_checks,
+            rate = rate_str,
+            streak = e.best_streak,
+            crits = e.critical_successes,
+            xp = e.total_xp,
+        ));
+    }
+
+    let count = entries.len();
+
+    let table = if rows.is_empty() {
+        "<p style=\"color:var(--muted)\">No profiles found.</p>".to_string()
+    } else {
+        format!(
+            r#"<table class="data-table">
+  <thead><tr>
+    <th style="text-align:center">Rank</th>
+    <th>Name</th>
+    <th>Archetype</th>
+    <th style="text-align:center">Level</th>
+    <th style="text-align:center">Checks</th>
+    <th style="text-align:center">Pass Rate</th>
+    <th style="text-align:center">Best Streak</th>
+    <th style="text-align:center">Criticals</th>
+    <th style="text-align:right">XP</th>
+  </tr></thead>
+  <tbody>{rows}</tbody>
+</table>"#
+        )
+    };
+
+    let body = format!(
+        r#"    <h2 class="section-title">Leaderboard — {count} Detectives</h2>
+    {table}"#
+    );
+
+    // Need a character for layout theming — load active or use defaults
+    match crate::character::Character::load_active() {
+        Ok(ch) => render_layout(&ch, "Leaderboard", "Leaderboard", &body),
+        Err(_) => {
+            // Minimal fallback if no active character
+            format!(
+                r#"<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Leaderboard</title></head>
+<body style="background:#1a1a2e;color:#d4a574;font-family:monospace;padding:2rem">
+{body}
+</body></html>"#
+            )
+        }
+    }
 }
 
 fn page_not_found() -> String {
