@@ -1,5 +1,6 @@
 use crate::achievements::{self as achievements, Achievement};
 use crate::cases::{self as cases, Case};
+use crate::companion::InnerVoice;
 use crate::equipment::{self as equipment, Loadout};
 use crate::journal::{self, EntryType, Genre, JournalEntry};
 use crate::skills::{Attribute, Skill};
@@ -55,6 +56,8 @@ pub struct Character {
     pub cases: Vec<Case>,
     #[serde(default)]
     pub achievements: HashSet<Achievement>,
+    #[serde(default)]
+    pub inner_voice: Option<InnerVoice>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -202,6 +205,7 @@ impl Character {
             loadout: equipment::starting_loadout(),
             cases: cases::all_cases(),
             achievements: HashSet::new(),
+            inner_voice: None,
         }
     }
 
@@ -555,6 +559,10 @@ impl Character {
         // Migration: populate cases for pre-cases characters
         if self.cases.is_empty() {
             self.cases = cases::all_cases();
+        }
+        // Migration: initialize inner voice
+        if self.inner_voice.is_none() {
+            self.inner_voice = Some(InnerVoice::from_character(self));
         }
     }
 

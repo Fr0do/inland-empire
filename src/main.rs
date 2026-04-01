@@ -3,6 +3,7 @@ mod agents;
 mod cases;
 mod character;
 mod checks;
+mod companion;
 mod companions;
 mod copotype;
 mod dashboard;
@@ -207,6 +208,9 @@ enum Commands {
         #[arg(long)]
         no_open: bool,
     },
+    /// Show your inner voice companion status
+    #[command(name = "inner-voice")]
+    InnerVoice,
 }
 
 #[derive(Subcommand)]
@@ -272,6 +276,7 @@ fn main() {
         Commands::Compare { name1, name2 } => cmd_compare(&name1, name2.as_deref()),
         Commands::Card { name, output } => cmd_card(name, output),
         Commands::Dashboard { port, no_open } => cmd_dashboard(port, no_open),
+        Commands::InnerVoice => cmd_inner_voice(),
     }
 }
 
@@ -413,6 +418,19 @@ fn cmd_check(tool: &str, context: &str, difficulty: Option<u8>, skill_override: 
         eprintln!("{}", "\n╔══════════════════════════════════════╗\n║           G A M E   O V E R          ║\n║  Your spirit breaks. The work stops.  ║\n║  (mercy rule: health/morale set to 1) ║\n╚══════════════════════════════════════╝".red().bold());
         ch.health = ch.health.max(1);
         ch.morale = ch.morale.max(1);
+    }
+    // Inner voice commentary
+    if let Some(mut voice) = ch.inner_voice.clone() {
+        voice.update_after_check(&ch, result.success, result.critical_success);
+        let event = companion::CompanionEvent::PostCheck {
+            success: result.success,
+            critical: result.critical_success,
+            skill,
+        };
+        if let Some(text) = companion::commentary(&voice, event, &ch) {
+            println!("{}", companion::format_companion_line(&voice, &text));
+        }
+        ch.inner_voice = Some(voice);
     }
     ch.save().expect("Failed to save character");
 }
@@ -633,6 +651,20 @@ fn cmd_hook_check(tool: &str, context: &str) {
             "{}",
             serde_json::to_string(&event.to_json()).unwrap_or_default()
         );
+    }
+
+    // Inner voice commentary
+    if let Some(mut voice) = ch.inner_voice.clone() {
+        voice.update_after_check(&ch, result.success, result.critical_success);
+        let iv_event = companion::CompanionEvent::PostCheck {
+            success: result.success,
+            critical: result.critical_success,
+            skill,
+        };
+        if let Some(text) = companion::commentary(&voice, iv_event, &ch) {
+            eprintln!("{}", companion::format_companion_line(&voice, &text));
+        }
+        ch.inner_voice = Some(voice);
     }
 
     ch.save().ok();
@@ -1259,6 +1291,19 @@ fn cmd_companions(model: Option<&str>) {
 fn cmd_dashboard(port: u16, no_open: bool) {
     match Character::load_active() {
         Ok(ch) => dashboard::serve(&ch, port, no_open),
+        Err(e) => eprintln!("{}", e),
+    }
+}
+
+fn cmd_inner_voice() {
+    match Character::load_active() {
+        Ok(ch) => {
+            let voice = ch
+                .inner_voice
+                .clone()
+                .unwrap_or_else(|| companion::InnerVoice::from_character(&ch));
+            println!("{}", companion::companion_status(&voice));
+        }
         Err(e) => eprintln!("{}", e),
     }
 }
