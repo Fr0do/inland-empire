@@ -140,23 +140,135 @@ impl Skill {
         }
     }
 
-    pub fn for_tool(tool: &str) -> Self {
+    pub fn for_tool(tool: &str, context: &str) -> Self {
+        let ctx = context.to_lowercase();
         match tool {
-            "Bash" | "bash" => Skill::Interfacing,
-            "Edit" | "edit" => Skill::HandEyeCoordination,
-            "Write" | "write" => Skill::Conceptualization,
-            "Read" | "read" => Skill::Perception,
+            "Bash" | "bash" => bash_skill(&ctx),
+            "Read" | "read" => {
+                if ctx.contains("test") || ctx.contains("spec") {
+                    Skill::Logic
+                } else if ctx.contains(".lock") {
+                    Skill::Composure
+                } else if ctx.contains("readme") || ctx.contains("doc") || ctx.contains(".md") {
+                    Skill::Encyclopedia
+                } else if ctx.contains("config")
+                    || ctx.contains(".toml")
+                    || ctx.contains(".yaml")
+                    || ctx.contains(".json")
+                    || ctx.contains(".env")
+                {
+                    Skill::VisualCalculus
+                } else {
+                    Skill::Perception
+                }
+            }
+            "Edit" | "edit" => {
+                if ctx.contains("test") || ctx.contains("spec") {
+                    Skill::Logic
+                } else if ctx.contains("config")
+                    || ctx.contains(".toml")
+                    || ctx.contains(".yaml")
+                {
+                    Skill::VisualCalculus
+                } else if ctx.contains("css")
+                    || ctx.contains("style")
+                    || ctx.contains("ui")
+                    || ctx.contains("html")
+                {
+                    Skill::Conceptualization
+                } else if ctx.contains("error")
+                    || ctx.contains("catch")
+                    || ctx.contains("panic")
+                {
+                    Skill::PainThreshold
+                } else {
+                    Skill::HandEyeCoordination
+                }
+            }
+            "Write" | "write" => {
+                if ctx.contains("test") || ctx.contains("spec") {
+                    Skill::Logic
+                } else if ctx.contains("config")
+                    || ctx.contains(".toml")
+                    || ctx.contains(".yaml")
+                {
+                    Skill::VisualCalculus
+                } else {
+                    Skill::Conceptualization
+                }
+            }
             "Glob" | "glob" => Skill::VisualCalculus,
-            "Grep" | "grep" => Skill::Encyclopedia,
+            "Grep" | "grep" => {
+                if ctx.contains("error") || ctx.contains("bug") || ctx.contains("fix") {
+                    Skill::Perception
+                } else if ctx.contains("todo") || ctx.contains("hack") || ctx.contains("fixme") {
+                    Skill::InlandEmpire
+                } else {
+                    Skill::Encyclopedia
+                }
+            }
             "WebFetch" | "web_fetch" => Skill::Interfacing,
             "WebSearch" | "web_search" => Skill::Encyclopedia,
             "Agent" | "agent" => Skill::Authority,
-            "git push" | "push" => Skill::Electrochemistry,
-            "git reset" | "reset" => Skill::HalfLight,
-            "rm" | "delete" => Skill::HalfLight,
-            "deploy" => Skill::Electrochemistry,
             _ => Skill::Logic,
         }
+    }
+}
+
+fn bash_skill(ctx: &str) -> Skill {
+    if ctx.contains("git push") {
+        Skill::Electrochemistry
+    } else if ctx.contains("git commit") {
+        Skill::Rhetoric
+    } else if ctx.contains("git log")
+        || ctx.contains("git blame")
+        || ctx.contains("git diff")
+        || ctx.contains("git show")
+    {
+        Skill::Encyclopedia
+    } else if ctx.contains("git reset") || ctx.contains("git checkout --") {
+        Skill::HalfLight
+    } else if ctx.contains("git merge") || ctx.contains("git rebase") {
+        Skill::Authority
+    } else if ctx.contains("git stash") || ctx.contains("git branch") {
+        Skill::Savoir
+    } else if ctx.contains("cargo test") || ctx.contains("pytest") || ctx.contains("npm test") {
+        Skill::Logic
+    } else if ctx.contains("cargo build") || ctx.contains("make") || ctx.contains("npm run build") {
+        Skill::Endurance
+    } else if ctx.contains("cargo clippy") || ctx.contains("lint") {
+        Skill::Perception
+    } else if ctx.contains("rm ") || ctx.contains("del ") || ctx.contains("drop ") || ctx.contains("truncate") {
+        Skill::HalfLight
+    } else if ctx.contains("docker")
+        || ctx.contains("kubectl")
+        || ctx.contains("k8s")
+        || ctx.contains("terraform")
+    {
+        Skill::Interfacing
+    } else if ctx.contains("curl") || ctx.contains("wget") || ctx.contains("http") || ctx.contains("fetch") {
+        Skill::Esprit
+    } else if ctx.contains("npm install") || ctx.contains("pip install") || ctx.contains("cargo add") {
+        Skill::Electrochemistry
+    } else if ctx.contains("ssh") || ctx.contains("scp") {
+        Skill::Shivers
+    } else if ctx.contains("env")
+        || ctx.contains("secret")
+        || ctx.contains("token")
+        || ctx.contains("key")
+        || ctx.contains("credential")
+    {
+        Skill::Composure
+    } else if ctx.contains("sed") || ctx.contains("awk") || ctx.contains("grep") {
+        Skill::VisualCalculus
+    } else if ctx.contains("chmod") || ctx.contains("chown") || ctx.contains("sudo") {
+        Skill::Authority
+    } else if ctx.contains("echo") || ctx.contains("printf") || ctx.contains("cat") {
+        Skill::Drama
+    } else if ctx.contains("sleep") || ctx.contains("wait") {
+        Skill::Volition
+    } else {
+        Skill::Interfacing
     }
 }
 

@@ -21,8 +21,8 @@ pub enum Difficulty {
 }
 
 impl Difficulty {
-    pub fn threshold(&self) -> u8 {
-        match self {
+    pub fn threshold_for_level(&self, level: u32) -> u8 {
+        let base: u8 = match self {
             Difficulty::Trivial => 6,
             Difficulty::Easy => 8,
             Difficulty::Medium => 10,
@@ -31,7 +31,9 @@ impl Difficulty {
             Difficulty::Legendary => 16,
             Difficulty::Heroic => 18,
             Difficulty::Godly => 20,
-        }
+        };
+        let scaling = (level.saturating_sub(1) / 3) as u8;
+        base.saturating_add(scaling).min(20)
     }
     pub fn from_threshold(n: u8) -> Self {
         match n {
@@ -60,8 +62,38 @@ impl Difficulty {
     pub fn for_action(tool: &str, context: &str) -> Self {
         let ctx = context.to_lowercase();
         match tool {
-            "Read" | "read" | "Glob" | "glob" | "Grep" | "grep" => Difficulty::Trivial,
-            "Edit" | "edit" => Difficulty::Easy,
+            "Read" | "read" => {
+                if ctx.contains(".lock") || ctx.contains("/usr/") || ctx.contains("/proc/") {
+                    Difficulty::Easy
+                } else {
+                    Difficulty::Trivial
+                }
+            }
+            "Glob" | "glob" => Difficulty::Trivial,
+            "Grep" | "grep" => {
+                if ctx.contains("secret")
+                    || ctx.contains("key")
+                    || ctx.contains("token")
+                    || ctx.contains("password")
+                    || ctx.contains("credential")
+                {
+                    Difficulty::Easy
+                } else {
+                    Difficulty::Trivial
+                }
+            }
+            "Edit" | "edit" => {
+                if ctx.contains("config")
+                    || ctx.contains(".toml")
+                    || ctx.contains(".yaml")
+                    || ctx.contains(".yml")
+                    || ctx.contains(".github")
+                {
+                    Difficulty::Medium
+                } else {
+                    Difficulty::Easy
+                }
+            }
             "Write" | "write" => Difficulty::Medium,
             "Bash" | "bash" => {
                 if ctx.contains("rm ")
@@ -500,9 +532,8 @@ pub fn passive_interjections(
     tool: &str,
     context: &str,
 ) -> Vec<Interjection> {
-    let primary = Skill::for_tool(tool);
+    let primary = Skill::for_tool(tool, context);
     let mut rng = rand::rng();
-    let _ = context;
     let mut results: Vec<Interjection> = Vec::new();
     for skill in Skill::all() {
         if *skill == primary {

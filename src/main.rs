@@ -398,9 +398,9 @@ fn cmd_check(tool: &str, context: &str, difficulty: Option<u8>, skill_override: 
             std::process::exit(1);
         })
     } else {
-        Skill::for_tool(tool)
+        Skill::for_tool(tool, context)
     };
-    let threshold = difficulty.unwrap_or_else(|| Difficulty::for_action(tool, context).threshold());
+    let threshold = difficulty.unwrap_or_else(|| Difficulty::for_action(tool, context).threshold_for_level(ch.level));
     let color = CheckColor::for_action(tool, context);
     let ctx = if context.is_empty() {
         format!("{} action", tool)
@@ -565,8 +565,8 @@ fn cmd_hook_check(tool: &str, context: &str) {
             return;
         }
     };
-    let skill = Skill::for_tool(tool);
-    let threshold = Difficulty::for_action(tool, context).threshold();
+    let skill = Skill::for_tool(tool, context);
+    let threshold = Difficulty::for_action(tool, context).threshold_for_level(ch.level);
 
     // Fast path: auto-pass trivial checks for skilled characters (small XP, no journal entry)
     if threshold <= 6 {
