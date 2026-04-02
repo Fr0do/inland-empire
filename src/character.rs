@@ -6,6 +6,7 @@ use crate::journal::{self, EntryType, Genre, JournalEntry};
 use crate::skills::{Attribute, Skill};
 use crate::substances::{starting_inventory, ActiveEffect, Substance};
 use crate::time::TimeOfDay;
+use crate::checks::DifficultyTier;
 use crate::types::CheckColor;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -58,6 +59,8 @@ pub struct Character {
     pub achievements: HashSet<Achievement>,
     #[serde(default)]
     pub inner_voice: Option<InnerVoice>,
+    #[serde(default)]
+    pub difficulty_tier: DifficultyTier,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -206,6 +209,7 @@ impl Character {
             cases: cases::all_cases(),
             achievements: HashSet::new(),
             inner_voice: None,
+            difficulty_tier: DifficultyTier::default(),
         }
     }
 

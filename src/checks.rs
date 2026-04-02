@@ -1,3 +1,4 @@
+use serde::{Serialize, Deserialize};
 use crate::character::{Character, CheckRecord};
 use crate::journal::{self, EntryType};
 use crate::skills::{Attribute, Skill};
@@ -20,8 +21,43 @@ pub enum Difficulty {
     Godly,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub enum DifficultyTier {
+    Casual,
+    Normal,
+    Hardcore,
+}
+
+impl Default for DifficultyTier {
+    fn default() -> Self {
+        DifficultyTier::Normal
+    }
+}
+
+impl std::fmt::Display for DifficultyTier {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            DifficultyTier::Casual => write!(f, "Casual"),
+            DifficultyTier::Normal => write!(f, "Normal"),
+            DifficultyTier::Hardcore => write!(f, "Hardcore"),
+        }
+    }
+}
+
+impl std::str::FromStr for DifficultyTier {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "casual" | "easy" => Ok(DifficultyTier::Casual),
+            "normal" | "medium" => Ok(DifficultyTier::Normal),
+            "hardcore" | "hard" => Ok(DifficultyTier::Hardcore),
+            _ => Err(format!("Unknown tier: {}. Use casual/normal/hardcore", s)),
+        }
+    }
+}
+
 impl Difficulty {
-    pub fn threshold_for_level(&self, level: u32) -> u8 {
+    pub fn threshold_for_level(&self, level: u32, tier: DifficultyTier) -> u8 {
         let base: u8 = match self {
             Difficulty::Trivial => 6,
             Difficulty::Easy => 8,
@@ -32,7 +68,12 @@ impl Difficulty {
             Difficulty::Heroic => 18,
             Difficulty::Godly => 20,
         };
-        let scaling = (level.saturating_sub(1) / 3) as u8;
+        let divisor = match tier {
+            DifficultyTier::Casual => 5,
+            DifficultyTier::Normal => 3,
+            DifficultyTier::Hardcore => 2,
+        };
+        let scaling = (level.saturating_sub(1) / divisor) as u8;
         base.saturating_add(scaling).min(20)
     }
     pub fn from_threshold(n: u8) -> Self {

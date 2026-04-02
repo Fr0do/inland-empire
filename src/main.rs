@@ -23,7 +23,7 @@ mod time;
 mod types;
 
 use character::{list_profiles, Character, Thought, ThoughtPhase, ARCHETYPES};
-use checks::{passive_interjections, perform_check, Difficulty};
+use checks::{passive_interjections, perform_check, Difficulty, DifficultyTier};
 use clap::{Parser, Subcommand};
 use equipment::{catalog as equipment_catalog, EquipSlot};
 use journal::Genre;
@@ -211,6 +211,10 @@ enum Commands {
     /// Show your inner voice companion status
     #[command(name = "inner-voice")]
     InnerVoice,
+    /// Set difficulty tier (casual/normal/hardcore)
+    Difficulty {
+        tier: String,
+    },
 }
 
 #[derive(Subcommand)]
@@ -277,6 +281,7 @@ fn main() {
         Commands::Card { name, output } => cmd_card(name, output),
         Commands::Dashboard { port, no_open } => cmd_dashboard(port, no_open),
         Commands::InnerVoice => cmd_inner_voice(),
+        Commands::Difficulty { tier } => cmd_difficulty(&tier),
     }
 }
 
@@ -400,7 +405,7 @@ fn cmd_check(tool: &str, context: &str, difficulty: Option<u8>, skill_override: 
     } else {
         Skill::for_tool(tool, context)
     };
-    let threshold = difficulty.unwrap_or_else(|| Difficulty::for_action(tool, context).threshold_for_level(ch.level));
+    let threshold = difficulty.unwrap_or_else(|| Difficulty::for_action(tool, context).threshold_for_level(ch.level, ch.difficulty_tier));
     let color = CheckColor::for_action(tool, context);
     let ctx = if context.is_empty() {
         format!("{} action", tool)
@@ -566,7 +571,7 @@ fn cmd_hook_check(tool: &str, context: &str) {
         }
     };
     let skill = Skill::for_tool(tool, context);
-    let threshold = Difficulty::for_action(tool, context).threshold_for_level(ch.level);
+    let threshold = Difficulty::for_action(tool, context).threshold_for_level(ch.level, ch.difficulty_tier);
 
     // Fast path: auto-pass trivial checks for skilled characters (small XP, no journal entry)
     if threshold <= 6 {
@@ -1293,6 +1298,20 @@ fn cmd_dashboard(port: u16, no_open: bool) {
         Ok(ch) => dashboard::serve(&ch, port, no_open),
         Err(e) => eprintln!("{}", e),
     }
+}
+
+fn cmd_difficulty(tier: &str) {
+    let tier: DifficultyTier = tier.parse().unwrap_or_else(|e| {
+        eprintln!("{}", e);
+        std::process::exit(1);
+    });
+    let mut ch = Character::load_active().unwrap_or_else(|e| {
+        eprintln!("{}", e);
+        std::process::exit(1);
+    });
+    ch.difficulty_tier = tier;
+    ch.save().unwrap();
+    println!("Difficulty set to {}", tier);
 }
 
 fn cmd_inner_voice() {
