@@ -1,0 +1,436 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Psychic&apos;s Journal</title>
+  <subtitle>Sensitive &middot; Level 23 &middot; Detective Noir</subtitle>
+  <id>https://example.com/</id>
+  <link rel="self" href="https://example.com/feed.xml"/>
+  <link rel="alternate" href="https://example.com/"/>
+  <updated>2026-04-04T15:27:09.021796+00:00</updated>
+  <author>
+    <name>Psychic</name>
+  </author>
+  <entry>
+    <title>MANUAL: Psychic</title>
+    <id>tag:example.com,2026-04-04/entries/3534</id>
+    <published>2026-04-04T15:27:09.021796+00:00</published>
+    <updated>2026-04-04T15:27:09.021796+00:00</updated>
+    <link href="https://example.com/entries/3534.html"/>
+    <content type="html">[Kim Kitsuragi] Kim closes his notebook. &#39;Done.&#39; No fanfare needed.</content>
+  </entry>
+  <entry>
+    <title>PASS: Psychic</title>
+    <id>tag:example.com,2026-04-04/entries/3533</id>
+    <published>2026-04-04T15:27:09.021684+00:00</published>
+    <updated>2026-04-04T15:27:09.021684+00:00</updated>
+    <link href="https://example.com/entries/3533.html"/>
+    <content type="html">Perception held on {&quot;file_path&quot;:&quot;/Users/mkurkin/experiments/gore/gore.py&quot;,&quot;limit&quot;:50}.
+[Perception | 1+2+5=8 vs DC7 | PASS | White]</content>
+  </entry>
+  <entry>
+    <title>MANUAL: Psychic</title>
+    <id>tag:example.com,2026-04-04/entries/3532</id>
+    <published>2026-04-04T15:27:01.838126+00:00</published>
+    <updated>2026-04-04T15:27:01.838126+00:00</updated>
+    <link href="https://example.com/entries/3532.html"/>
+    <content type="html">[Kim Kitsuragi] &#39;Unexpected,&#39; Kim mutters, already analyzing what went wrong.</content>
+  </entry>
+  <entry>
+    <title>GAME OVER: Psychic</title>
+    <id>tag:example.com,2026-04-04/entries/3531</id>
+    <published>2026-04-04T15:27:01.837833+00:00</published>
+    <updated>2026-04-04T15:27:01.837833+00:00</updated>
+    <link href="https://example.com/entries/3531.html"/>
+    <content type="html">No more leads. No more strength. The city wins this round.</content>
+  </entry>
+  <entry>
+    <title>CRITICAL FAILURE: Psychic</title>
+    <id>tag:example.com,2026-04-04/entries/3530</id>
+    <published>2026-04-04T15:27:01.837578+00:00</published>
+    <updated>2026-04-04T15:27:01.837578+00:00</updated>
+    <link href="https://example.com/entries/3530.html"/>
+    <content type="html">The dice betrayed me. Perception crumbled on {&quot;file_path&quot;:&quot;/Users/mkurkin/experiments/gore/gore.py&quot;,&quot;limit&quot;:50}. Another dead end.
+[Perception | 1+1+5=7 vs DC7 | FAIL | White]</content>
+  </entry>
+  <entry>
+    <title>MANUAL: Psychic</title>
+    <id>tag:example.com,2026-04-04/entries/3529</id>
+    <published>2026-04-04T15:25:42.163847+00:00</published>
+    <updated>2026-04-04T15:25:42.163847+00:00</updated>
+    <link href="https://example.com/entries/3529.html"/>
+    <content type="html">[Kim Kitsuragi] &#39;It&#39;s finished,&#39; Kim says, reviewing his work once more.</content>
+  </entry>
+  <entry>
+    <title>PASS: Psychic</title>
+    <id>tag:example.com,2026-04-04/entries/3528</id>
+    <published>2026-04-04T15:25:42.163201+00:00</published>
+    <updated>2026-04-04T15:25:42.163201+00:00</updated>
+    <link href="https://example.com/entries/3528.html"/>
+    <content type="html">Interfacing held on {&quot;command&quot;:&quot;ls -la /Users/mkurkin/experiments/gore/*.py /Users/mkurkin/experiments/gore/data/*.py 2&gt;/dev/null&quot;,&quot;description&quot;:&quot;List all Python files&quot;}.
+[Interfacing | 5+6+4=15 vs DC11 | PASS | White]</content>
+  </entry>
+  <entry>
+    <title>MANUAL: Psychic</title>
+    <id>tag:example.com,2026-04-04/entries/3527</id>
+    <published>2026-04-04T12:03:53.947934+00:00</published>
+    <updated>2026-04-04T12:03:53.947934+00:00</updated>
+    <link href="https://example.com/entries/3527.html"/>
+    <content type="html">[Kim Kitsuragi] &#39;It&#39;s finished,&#39; Kim says, reviewing his work once more.</content>
+  </entry>
+  <entry>
+    <title>PASS: Psychic</title>
+    <id>tag:example.com,2026-04-04/entries/3526</id>
+    <published>2026-04-04T12:03:53.947031+00:00</published>
+    <updated>2026-04-04T12:03:53.947031+00:00</updated>
+    <link href="https://example.com/entries/3526.html"/>
+    <content type="html">Logic held on {&quot;file_path&quot;:&quot;/Users/mkurkin/experiments/marrow-paper/CLAUDE.md&quot;,&quot;content&quot;:&quot;# CLAUDE.md\n\nThis file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.\n\n## Project\n\nLaTeX source for \&quot;Spectral-R1: Latent Energy-Based Verifiable Reward for Online RL without Labels\&quot; — NeurIPS 2026 submission.\n\nCore claim: Spectral structure in the latent space of a policy&#39;s rollouts provides a verifiable reward signal without ground-truth labels, enabling online RL where outcome supervision is unavailable.\n\nPaper plan: `self-reward-plan.md`\n\n### Lineage\n\nThis paper evolves from the Spectral-R1 line of work:\n- Previous paper repo: `../s_cot_tex` (NeurIPS 2025 submission — agentic decoding + energy-based OT)\n- Training code: `../s_cot_tex/s_cot/` and remote `kurkin-1:/workspace-SR004.nfs2/kurkin/s_cot`\n- Governance/bot: `../ourosss`\n\n## Build\n\n```bash\nmake            # Full build: pdflatex + bibtex (3-pass)\nmake clean      # Remove aux files\nmake distclean  # Remove aux + PDF\n```\n\nRequires pdflatex and bibtex. Style file: `neurips_2026.sty` (included, based on neurips_2025.sty).\n\n## Structure\n\n```\nmain.tex                — entry point; \\input{sections/XX_name}\nreferences.bib          — BibTeX references\nneurips_2026.sty        — NeurIPS style file\nsections/\n  00_abstract.tex       — abstract\n  01_introduction.tex   — introduction\n  02_related_work.tex   — related work\n  03_method.tex         — method (spectral verifier, training objective, GORE)\n  04_experiments.tex    — experiments and ablations\n  05_discussion.tex     — discussion and limitations\n  06_conclusion.tex     — conclusion\n  07_appendix.tex       — appendix\nfigures/                — figures directory\n```\n\n## LaTeX Conventions\n\n- One sentence per line in .tex files (clean diffs)\n- `\\input{sections/XX_name}` for all sections — do not inline content in main.tex\n- Use `[preprint]` option during development; switch to `[final]` for camera-ready\n- Figures go in `figures/` directory\n\n## Git Conventions\n\n- Commit prefixes: `[paper]` for content, `[fig]` for figures, `[bib]` for references\n- `fixes #N` in commits to auto-close issues\n\n## Key Technical Concepts\n\n- **Spectral Verifier**: reward signal derived from spectral structure of rollout representations (eigenspectrum of latent matrix), r(x) = -E(z)\n- **GRPO base**: Group Relative Policy Optimization with spectral reward replacing/augmenting outcome reward\n- **GORE**: formal language with deterministic interpreter used as controlled experimental environment\n- **KL regularization**: precision-weighted KL penalty (connection to predictive processing / active inference)\n- Base models: Qwen3-1.7B, Qwen3-7B with LoRA (r=16)\n\n## Key References\n\n- DeepSeek-R1 (Guo et al., 2025) — verifiable outcome reward\n- GRPO / DAPO / Dr.GRPO — policy optimization baselines\n- Let&#39;s Verify Step by Step (Lightman et al., 2023) — process reward\n- Math-Shepherd (Wang et al., 2024) — process reward without annotations\n- DIAYN (Eysenbach et al., 2018) — intrinsic reward baseline\n- Active Inference / FEP (Friston) — intro analogy only\n&quot;}.
+[Logic | 1+6+4=11 vs DC11 | PASS | White]</content>
+  </entry>
+  <entry>
+    <title>MANUAL: Psychic</title>
+    <id>tag:example.com,2026-04-04/entries/3525</id>
+    <published>2026-04-04T12:03:29.254749+00:00</published>
+    <updated>2026-04-04T12:03:29.254749+00:00</updated>
+    <link href="https://example.com/entries/3525.html"/>
+    <content type="html">[Kim Kitsuragi] Kim nods. Clean work. As always.</content>
+  </entry>
+  <entry>
+    <title>PASS: Psychic</title>
+    <id>tag:example.com,2026-04-04/entries/3524</id>
+    <published>2026-04-04T12:03:29.254646+00:00</published>
+    <updated>2026-04-04T12:03:29.254646+00:00</updated>
+    <link href="https://example.com/entries/3524.html"/>
+    <content type="html">Perception held on {&quot;file_path&quot;:&quot;/Users/mkurkin/experiments/marrow-paper/neurips_2026.sty&quot;,&quot;limit&quot;:5}.
+[Perception | 3+5+5=13 vs DC7 | PASS | White]</content>
+  </entry>
+  <entry>
+    <title>MANUAL: Psychic</title>
+    <id>tag:example.com,2026-04-04/entries/3523</id>
+    <published>2026-04-04T12:03:23.931291+00:00</published>
+    <updated>2026-04-04T12:03:23.931291+00:00</updated>
+    <link href="https://example.com/entries/3523.html"/>
+    <content type="html">[Kim Kitsuragi] Kim nods. Clean work. As always.</content>
+  </entry>
+  <entry>
+    <title>PASS: Psychic</title>
+    <id>tag:example.com,2026-04-04/entries/3522</id>
+    <published>2026-04-04T12:03:23.931180+00:00</published>
+    <updated>2026-04-04T12:03:23.931180+00:00</updated>
+    <link href="https://example.com/entries/3522.html"/>
+    <content type="html">Conceptualization held on {&quot;file_path&quot;:&quot;/Users/mkurkin/experiments/marrow-paper/.gitignore&quot;,&quot;content&quot;:&quot;*.aux\n*.bbl\n*.blg\n*.log\n*.out\n*.toc\n*.fls\n*.fdb_latexmk\n*.synctex.gz\nmain.pdf\n.DS_Store\n&quot;}.
+[Conceptualization | 3+4+5=12 vs DC11 | PASS | White]</content>
+  </entry>
+  <entry>
+    <title>MANUAL: Psychic</title>
+    <id>tag:example.com,2026-04-04/entries/3521</id>
+    <published>2026-04-04T12:03:18.528890+00:00</published>
+    <updated>2026-04-04T12:03:18.528890+00:00</updated>
+    <link href="https://example.com/entries/3521.html"/>
+    <content type="html">[Kim Kitsuragi] Kim frowns. &#39;This... didn&#39;t go as planned.&#39;</content>
+  </entry>
+  <entry>
+    <title>CRITICAL FAILURE: Psychic</title>
+    <id>tag:example.com,2026-04-04/entries/3520</id>
+    <published>2026-04-04T12:03:18.528792+00:00</published>
+    <updated>2026-04-04T12:03:18.528792+00:00</updated>
+    <link href="https://example.com/entries/3520.html"/>
+    <content type="html">The dice betrayed me. Conceptualization crumbled on {&quot;file_path&quot;:&quot;/Users/mkurkin/experiments/marrow-paper/.gitignore&quot;,&quot;content&quot;:&quot;# LaTeX\n*.aux\n*.bbl\n*.blg\n*.log\n*.out\n*.toc\n*.fls\n*.fdb_latexmk\n*.synctex.gz\nmain.pdf\n.DS_Store\n*.swp\n*~\n&quot;}. Another dead end.
+[Conceptualization | 1+1+5=7 vs DC11 | FAIL | White]</content>
+  </entry>
+  <entry>
+    <title>MANUAL: Psychic</title>
+    <id>tag:example.com,2026-04-04/entries/3519</id>
+    <published>2026-04-04T12:03:13.674159+00:00</published>
+    <updated>2026-04-04T12:03:13.674159+00:00</updated>
+    <link href="https://example.com/entries/3519.html"/>
+    <content type="html">[Kim Kitsuragi] A rare sigh from Kim. He&#39;ll try a different approach.</content>
+  </entry>
+  <entry>
+    <title>FAIL: Psychic</title>
+    <id>tag:example.com,2026-04-04/entries/3518</id>
+    <published>2026-04-04T12:03:13.674061+00:00</published>
+    <updated>2026-04-04T12:03:13.674061+00:00</updated>
+    <link href="https://example.com/entries/3518.html"/>
+    <content type="html">Conceptualization faltered on {&quot;file_path&quot;:&quot;/Users/mkurkin/experiments/marrow-paper/.gitignore&quot;,&quot;content&quot;:&quot;# LaTeX build artifacts\n*.aux\n*.bbl\n*.blg\n*.log\n*.out\n*.toc\n*.fls\n*.fdb_latexmk\n*.synctex.gz\n*.nav\n*.snm\n*.vrb\n\n# PDF (build output)\nmain.pdf\n\n# OS\n.DS_Store\n\n# Editor\n*.swp\n*~\n&quot;}.
+[Conceptualization | 3+1+5=9 vs DC11 | FAIL | White]</content>
+  </entry>
+  <entry>
+    <title>MANUAL: Psychic</title>
+    <id>tag:example.com,2026-04-04/entries/3517</id>
+    <published>2026-04-04T12:03:06.935962+00:00</published>
+    <updated>2026-04-04T12:03:06.935962+00:00</updated>
+    <link href="https://example.com/entries/3517.html"/>
+    <content type="html">[Kim Kitsuragi] A rare sigh from Kim. He&#39;ll try a different approach.</content>
+  </entry>
+  <entry>
+    <title>FAIL: Psychic</title>
+    <id>tag:example.com,2026-04-04/entries/3516</id>
+    <published>2026-04-04T12:03:06.935850+00:00</published>
+    <updated>2026-04-04T12:03:06.935850+00:00</updated>
+    <link href="https://example.com/entries/3516.html"/>
+    <content type="html">Conceptualization faltered on {&quot;file_path&quot;:&quot;/Users/mkurkin/experiments/marrow-paper/.gitignore&quot;,&quot;content&quot;:&quot;# LaTeX build artifacts\n*.aux\n*.bbl\n*.blg\n*.log\n*.out\n*.toc\n*.fls\n*.fdb_latexmk\n*.synctex.gz\n*.nav\n*.snm\n*.vrb\n\n# PDF (build output, keep source)\nmain.pdf\n\n# OS\n.DS_Store\n\n# Editor\n*.swp\n*~\n&quot;}.
+[Conceptualization | 2+2+5=9 vs DC11 | FAIL | White]</content>
+  </entry>
+  <entry>
+    <title>MANUAL: Psychic</title>
+    <id>tag:example.com,2026-04-04/entries/3515</id>
+    <published>2026-04-04T12:03:05.076448+00:00</published>
+    <updated>2026-04-04T12:03:05.076448+00:00</updated>
+    <link href="https://example.com/entries/3515.html"/>
+    <content type="html">[Kim Kitsuragi] Kim nods. Clean work. As always.</content>
+  </entry>
+  <entry>
+    <title>PASS: Psychic</title>
+    <id>tag:example.com,2026-04-04/entries/3514</id>
+    <published>2026-04-04T12:03:05.076352+00:00</published>
+    <updated>2026-04-04T12:03:05.076352+00:00</updated>
+    <link href="https://example.com/entries/3514.html"/>
+    <content type="html">Conceptualization held on {&quot;file_path&quot;:&quot;/Users/mkurkin/experiments/marrow-paper/Makefile&quot;,&quot;content&quot;:&quot;TEX = main\nPDF = $(TEX).pdf\n\n.PHONY: all clean distclean\n\nall: $(PDF)\n\n$(PDF): $(TEX).tex references.bib sections/*.tex\n\tpdflatex $(TEX)\n\tbibtex $(TEX)\n\tpdflatex $(TEX)\n\tpdflatex $(TEX)\n\nclean:\n\trm -f *.aux *.bbl *.blg *.log *.out *.toc *.fls *.fdb_latexmk *.synctex.gz\n\ndistclean: clean\n\trm -f $(PDF)\n&quot;}.
+[Conceptualization | 4+6+5=15 vs DC11 | PASS | White]</content>
+  </entry>
+  <entry>
+    <title>MANUAL: Psychic</title>
+    <id>tag:example.com,2026-04-04/entries/3513</id>
+    <published>2026-04-04T12:03:02.799574+00:00</published>
+    <updated>2026-04-04T12:03:02.799574+00:00</updated>
+    <link href="https://example.com/entries/3513.html"/>
+    <content type="html">[Kim Kitsuragi] Kim closes his notebook. &#39;Done.&#39; No fanfare needed.</content>
+  </entry>
+  <entry>
+    <title>PASS: Psychic</title>
+    <id>tag:example.com,2026-04-04/entries/3512</id>
+    <published>2026-04-04T12:03:02.799435+00:00</published>
+    <updated>2026-04-04T12:03:02.799435+00:00</updated>
+    <link href="https://example.com/entries/3512.html"/>
+    <content type="html">Logic held on {&quot;file_path&quot;:&quot;/Users/mkurkin/experiments/marrow-paper/references.bib&quot;,&quot;content&quot;:&quot;% References for Spectral-R1 paper\n\n@article{guo2025deepseek,\n  title={DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning},\n  author={Guo, Daya and Yang, Dejian and Zhang, He and Song, Junxiao and Zhang, Runxin and Xu, Runze and Zhu, Qihao and Ma, Shirong and Wang, Peiyi and Bi, Xiao and others},\n  journal={arXiv preprint arXiv:2501.12948},\n  year={2025}\n}\n\n@article{shao2024deepseekmath,\n  title={DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language Models},\n  author={Shao, Zhihong and Wang, Peiyi and Zhu, Qihao and Xu, Runxin and Song, Junxiao and Zhang, Mingchuan and Li, YK and Wu, Y and Guo, Daya},\n  journal={arXiv preprint arXiv:2402.03300},\n  year={2024}\n}\n\n@article{lightman2023lets,\n  title={Let&#39;s Verify Step by Step},\n  author={Lightman, Hunter and Kosaraju, Vineet and Burda, Yuri and Edwards, Harri and Baker, Bowen and Lee, Teddy and Leike, Jan and Schulman, John and Sutskever, Ilya and Cobbe, Karl},\n  journal={arXiv preprint arXiv:2305.20050},\n  year={2023}\n}\n\n@article{wang2024mathshepherd,\n  title={Math-Shepherd: Verify and Reinforce LLMs Step-by-step without Human Annotations},\n  author={Wang, Peiyi and Li, Lei and Shao, Zhihong and Xu, Runxin and Dai, Damai and Li, Yifei and Chen, Deli and Wu, Yu and Sui, Zhifang},\n  journal={arXiv preprint arXiv:2312.08935},\n  year={2024}\n}\n\n@inproceedings{eysenbach2018diversity,\n  title={Diversity is All You Need: Learning Skills without a Reward Function},\n  author={Eysenbach, Benjamin and Gupta, Abhishek and Ibarz, Julian and Levine, Sergey},\n  booktitle={International Conference on Learning Representations},\n  year={2018}\n}\n\n@article{friston2010free,\n  title={The free-energy principle: a unified brain theory?},\n  author={Friston, Karl},\n  journal={Nature Reviews Neuroscience},\n  volume={11},\n  number={2},\n  pages={127--138},\n  year={2010}\n}\n&quot;}.
+[Logic | 1+6+4=11 vs DC11 | PASS | White]</content>
+  </entry>
+  <entry>
+    <title>MANUAL: Psychic</title>
+    <id>tag:example.com,2026-04-04/entries/3511</id>
+    <published>2026-04-04T12:02:50.702525+00:00</published>
+    <updated>2026-04-04T12:02:50.702525+00:00</updated>
+    <link href="https://example.com/entries/3511.html"/>
+    <content type="html">[Kim Kitsuragi] Kim nods. Clean work. As always.</content>
+  </entry>
+  <entry>
+    <title>CRITICAL SUCCESS: Psychic</title>
+    <id>tag:example.com,2026-04-04/entries/3510</id>
+    <published>2026-04-04T12:02:50.702425+00:00</published>
+    <updated>2026-04-04T12:02:50.702425+00:00</updated>
+    <link href="https://example.com/entries/3510.html"/>
+    <content type="html">Sometimes the city gives back. Logic delivered on {&quot;file_path&quot;:&quot;/Users/mkurkin/experiments/marrow-paper/main.tex&quot;,&quot;content&quot;:&quot;\\documentclass{article}\n\n\\usepackage[preprint]{neurips_2026}\n\n\\usepackage[utf8]{inputenc}\n\\usepackage[T1]{fontenc}\n\\usepackage{hyperref}\n\\usepackage{url}\n\\usepackage{booktabs}\n\\usepackage{amsfonts}\n\\usepackage{amsmath}\n\\usepackage{amssymb}\n\\usepackage{nicefrac}\n\\usepackage{microtype}\n\\usepackage{xcolor}\n\\usepackage{graphicx}\n\\usepackage{algorithm}\n\\usepackage{algorithmic}\n\n\\title{Spectral-R1: Latent Energy-Based Verifiable Reward for Online RL without Labels}\n\n\\author{%\n  Anonymous Authors \\\\\n  \\texttt{anonymous@example.com} \\\\\n}\n\n\\begin{document}\n\n\\maketitle\n\n\\begin{abstract}\n\\input{sections/00_abstract.tex}\n\\end{abstract}\n\n\\section{Introduction}\n\\input{sections/01_introduction.tex}\n\n\\section{Related Work}\n\\input{sections/02_related_work.tex}\n\n\\section{Method}\n\\input{sections/03_method.tex}\n\n\\section{Experiments}\n\\input{sections/04_experiments.tex}\n\n\\section{Discussion}\n\\input{sections/05_discussion.tex}\n\n\\section{Conclusion}\n\\input{sections/06_conclusion.tex}\n\n\\bibliographystyle{plain}\n\\bibliography{references}\n\n\\newpage\n\\input{sections/07_appendix.tex}\n\n\\end{document}\n&quot;}. A rare win.
+[Logic | 6+6+4=16 vs DC11 | PASS | White]</content>
+  </entry>
+  <entry>
+    <title>MANUAL: Psychic</title>
+    <id>tag:example.com,2026-04-04/entries/3509</id>
+    <published>2026-04-04T12:02:42.786031+00:00</published>
+    <updated>2026-04-04T12:02:42.786031+00:00</updated>
+    <link href="https://example.com/entries/3509.html"/>
+    <content type="html">[Kim Kitsuragi] Kim nods. Clean work. As always.</content>
+  </entry>
+  <entry>
+    <title>PASS: Psychic</title>
+    <id>tag:example.com,2026-04-04/entries/3508</id>
+    <published>2026-04-04T12:02:42.785937+00:00</published>
+    <updated>2026-04-04T12:02:42.785937+00:00</updated>
+    <link href="https://example.com/entries/3508.html"/>
+    <content type="html">Interfacing held on {&quot;command&quot;:&quot;cp /Users/mkurkin/experiments/s_cot_tex/neurips_2025.sty /Users/mkurkin/experiments/marrow-paper/neurips_2026.sty&quot;,&quot;description&quot;:&quot;Copy NeurIPS style file&quot;}.
+[Interfacing | 3+4+4=11 vs DC11 | PASS | White]</content>
+  </entry>
+  <entry>
+    <title>MANUAL: Psychic</title>
+    <id>tag:example.com,2026-04-04/entries/3507</id>
+    <published>2026-04-04T12:02:37.047351+00:00</published>
+    <updated>2026-04-04T12:02:37.047351+00:00</updated>
+    <link href="https://example.com/entries/3507.html"/>
+    <content type="html">[Kim Kitsuragi] Kim nods. Clean work. As always.</content>
+  </entry>
+  <entry>
+    <title>PASS: Psychic</title>
+    <id>tag:example.com,2026-04-04/entries/3506</id>
+    <published>2026-04-04T12:02:37.047225+00:00</published>
+    <updated>2026-04-04T12:02:37.047225+00:00</updated>
+    <link href="https://example.com/entries/3506.html"/>
+    <content type="html">Conceptualization held on {&quot;file_path&quot;:&quot;/Users/mkurkin/experiments/marrow-paper/sections/01_introduction.tex&quot;,&quot;content&quot;:&quot;% Introduction — TODO\n&quot;}.
+[Conceptualization | 5+6+5=16 vs DC11 | PASS | White]</content>
+  </entry>
+  <entry>
+    <title>MANUAL: Psychic</title>
+    <id>tag:example.com,2026-04-04/entries/3505</id>
+    <published>2026-04-04T12:02:36.596546+00:00</published>
+    <updated>2026-04-04T12:02:36.596546+00:00</updated>
+    <link href="https://example.com/entries/3505.html"/>
+    <content type="html">[Kim Kitsuragi] Kim nods. Clean work. As always.</content>
+  </entry>
+  <entry>
+    <title>PASS: Psychic</title>
+    <id>tag:example.com,2026-04-04/entries/3504</id>
+    <published>2026-04-04T12:02:36.596436+00:00</published>
+    <updated>2026-04-04T12:02:36.596436+00:00</updated>
+    <link href="https://example.com/entries/3504.html"/>
+    <content type="html">Conceptualization held on {&quot;file_path&quot;:&quot;/Users/mkurkin/experiments/marrow-paper/sections/00_abstract.tex&quot;,&quot;content&quot;:&quot;% Abstract — TODO\n&quot;}.
+[Conceptualization | 4+4+5=13 vs DC11 | PASS | White]</content>
+  </entry>
+  <entry>
+    <title>MANUAL: Psychic</title>
+    <id>tag:example.com,2026-04-04/entries/3503</id>
+    <published>2026-04-04T12:02:32.685408+00:00</published>
+    <updated>2026-04-04T12:02:32.685408+00:00</updated>
+    <link href="https://example.com/entries/3503.html"/>
+    <content type="html">[Kim Kitsuragi] Kim nods. Clean work. As always.</content>
+  </entry>
+  <entry>
+    <title>PASS: Psychic</title>
+    <id>tag:example.com,2026-04-04/entries/3502</id>
+    <published>2026-04-04T12:02:32.685271+00:00</published>
+    <updated>2026-04-04T12:02:32.685271+00:00</updated>
+    <link href="https://example.com/entries/3502.html"/>
+    <content type="html">Conceptualization held on {&quot;file_path&quot;:&quot;/Users/mkurkin/experiments/marrow-paper/sections/05_discussion.tex&quot;,&quot;content&quot;:&quot;% Discussion (~0.5 page)\n% Scalable oversight, interpretability, limitations\n&quot;}.
+[Conceptualization | 3+5+5=13 vs DC11 | PASS | White]</content>
+  </entry>
+  <entry>
+    <title>MANUAL: Psychic</title>
+    <id>tag:example.com,2026-04-04/entries/3501</id>
+    <published>2026-04-04T12:02:32.269678+00:00</published>
+    <updated>2026-04-04T12:02:32.269678+00:00</updated>
+    <link href="https://example.com/entries/3501.html"/>
+    <content type="html">[Kim Kitsuragi] &#39;It&#39;s finished,&#39; Kim says, reviewing his work once more.</content>
+  </entry>
+  <entry>
+    <title>PASS: Psychic</title>
+    <id>tag:example.com,2026-04-04/entries/3500</id>
+    <published>2026-04-04T12:02:32.269586+00:00</published>
+    <updated>2026-04-04T12:02:32.269586+00:00</updated>
+    <link href="https://example.com/entries/3500.html"/>
+    <content type="html">Conceptualization held on {&quot;file_path&quot;:&quot;/Users/mkurkin/experiments/marrow-paper/sections/02_related_work.tex&quot;,&quot;content&quot;:&quot;% Related Work (~1 page)\n% Clusters: (1) Verifiable reward, (2) Process reward models, (3) Intrinsic RL\n&quot;}.
+[Conceptualization | 3+5+5=13 vs DC11 | PASS | White]</content>
+  </entry>
+  <entry>
+    <title>MANUAL: Psychic</title>
+    <id>tag:example.com,2026-04-04/entries/3499</id>
+    <published>2026-04-04T12:02:31.511375+00:00</published>
+    <updated>2026-04-04T12:02:31.511375+00:00</updated>
+    <link href="https://example.com/entries/3499.html"/>
+    <content type="html">[Kim Kitsuragi] Kim frowns. &#39;This... didn&#39;t go as planned.&#39;</content>
+  </entry>
+  <entry>
+    <title>FAIL: Psychic</title>
+    <id>tag:example.com,2026-04-04/entries/3498</id>
+    <published>2026-04-04T12:02:31.511280+00:00</published>
+    <updated>2026-04-04T12:02:31.511280+00:00</updated>
+    <link href="https://example.com/entries/3498.html"/>
+    <content type="html">Conceptualization faltered on {&quot;file_path&quot;:&quot;/Users/mkurkin/experiments/marrow-paper/sections/01_introduction.tex&quot;,&quot;content&quot;:&quot;% Introduction (~1 page)\n% Goal: Establish the problem, motivate the approach, state the contribution.\n&quot;}.
+[Conceptualization | 2+2+5=9 vs DC11 | FAIL | White]</content>
+  </entry>
+  <entry>
+    <title>MANUAL: Psychic</title>
+    <id>tag:example.com,2026-04-04/entries/3497</id>
+    <published>2026-04-04T12:02:30.757234+00:00</published>
+    <updated>2026-04-04T12:02:30.757234+00:00</updated>
+    <link href="https://example.com/entries/3497.html"/>
+    <content type="html">[Kim Kitsuragi] A rare sigh from Kim. He&#39;ll try a different approach.</content>
+  </entry>
+  <entry>
+    <title>FAIL: Psychic</title>
+    <id>tag:example.com,2026-04-04/entries/3496</id>
+    <published>2026-04-04T12:02:30.756560+00:00</published>
+    <updated>2026-04-04T12:02:30.756560+00:00</updated>
+    <link href="https://example.com/entries/3496.html"/>
+    <content type="html">Logic faltered on {&quot;file_path&quot;:&quot;/Users/mkurkin/experiments/marrow-paper/sections/00_abstract.tex&quot;,&quot;content&quot;:&quot;% Abstract for Spectral-R1\n% TODO: Write abstract following core claim from self-reward-plan.md\n&quot;}.
+[Logic | 2+3+4=9 vs DC11 | FAIL | White]</content>
+  </entry>
+  <entry>
+    <title>MANUAL: Psychic</title>
+    <id>tag:example.com,2026-04-04/entries/3495</id>
+    <published>2026-04-04T12:02:18.979210+00:00</published>
+    <updated>2026-04-04T12:02:18.979210+00:00</updated>
+    <link href="https://example.com/entries/3495.html"/>
+    <content type="html">[Kim Kitsuragi] &#39;It&#39;s finished,&#39; Kim says, reviewing his work once more.</content>
+  </entry>
+  <entry>
+    <title>PASS: Psychic</title>
+    <id>tag:example.com,2026-04-04/entries/3494</id>
+    <published>2026-04-04T12:02:18.979120+00:00</published>
+    <updated>2026-04-04T12:02:18.979120+00:00</updated>
+    <link href="https://example.com/entries/3494.html"/>
+    <content type="html">Conceptualization held on {&quot;file_path&quot;:&quot;/Users/mkurkin/experiments/marrow-paper/sections/07_appendix.tex&quot;,&quot;content&quot;:&quot;\\appendix\n\n% Appendix sections\n&quot;}.
+[Conceptualization | 3+5+5=13 vs DC11 | PASS | White]</content>
+  </entry>
+  <entry>
+    <title>MANUAL: Psychic</title>
+    <id>tag:example.com,2026-04-04/entries/3493</id>
+    <published>2026-04-04T12:02:18.461615+00:00</published>
+    <updated>2026-04-04T12:02:18.461615+00:00</updated>
+    <link href="https://example.com/entries/3493.html"/>
+    <content type="html">[Kim Kitsuragi] Kim nods. Clean work. As always.</content>
+  </entry>
+  <entry>
+    <title>PASS: Psychic</title>
+    <id>tag:example.com,2026-04-04/entries/3492</id>
+    <published>2026-04-04T12:02:18.461498+00:00</published>
+    <updated>2026-04-04T12:02:18.461498+00:00</updated>
+    <link href="https://example.com/entries/3492.html"/>
+    <content type="html">Conceptualization held on {&quot;file_path&quot;:&quot;/Users/mkurkin/experiments/marrow-paper/sections/06_conclusion.tex&quot;,&quot;content&quot;:&quot;% Conclusion (~0.25 page)\n&quot;}.
+[Conceptualization | 2+4+5=11 vs DC11 | PASS | White]</content>
+  </entry>
+  <entry>
+    <title>MANUAL: Psychic</title>
+    <id>tag:example.com,2026-04-04/entries/3491</id>
+    <published>2026-04-04T12:02:17.562507+00:00</published>
+    <updated>2026-04-04T12:02:17.562507+00:00</updated>
+    <link href="https://example.com/entries/3491.html"/>
+    <content type="html">[Kim Kitsuragi] A rare sigh from Kim. He&#39;ll try a different approach.</content>
+  </entry>
+  <entry>
+    <title>FAIL: Psychic</title>
+    <id>tag:example.com,2026-04-04/entries/3490</id>
+    <published>2026-04-04T12:02:17.562407+00:00</published>
+    <updated>2026-04-04T12:02:17.562407+00:00</updated>
+    <link href="https://example.com/entries/3490.html"/>
+    <content type="html">Conceptualization faltered on {&quot;file_path&quot;:&quot;/Users/mkurkin/experiments/marrow-paper/sections/05_discussion.tex&quot;,&quot;content&quot;:&quot;% Discussion (~0.5 page)\n% - Scalable oversight implications\n% - Interpretability connection\n% - Limitations\n&quot;}.
+[Conceptualization | 2+1+5=8 vs DC11 | FAIL | White]</content>
+  </entry>
+  <entry>
+    <title>MANUAL: Psychic</title>
+    <id>tag:example.com,2026-04-04/entries/3489</id>
+    <published>2026-04-04T12:02:16.833646+00:00</published>
+    <updated>2026-04-04T12:02:16.833646+00:00</updated>
+    <link href="https://example.com/entries/3489.html"/>
+    <content type="html">[Kim Kitsuragi] Kim nods. Clean work. As always.</content>
+  </entry>
+  <entry>
+    <title>PASS: Psychic</title>
+    <id>tag:example.com,2026-04-04/entries/3488</id>
+    <published>2026-04-04T12:02:16.833535+00:00</published>
+    <updated>2026-04-04T12:02:16.833535+00:00</updated>
+    <link href="https://example.com/entries/3488.html"/>
+    <content type="html">Conceptualization held on {&quot;file_path&quot;:&quot;/Users/mkurkin/experiments/marrow-paper/sections/04_experiments.tex&quot;,&quot;content&quot;:&quot;% Experiments (~2 pages)\n% 5.1 Setup (MATH, HumanEval/MBPP, GORE)\n% 5.2 Main Results\n% 5.3 Ablations\n% 5.4 Analysis\n&quot;}.
+[Conceptualization | 1+6+5=12 vs DC11 | PASS | White]</content>
+  </entry>
+  <entry>
+    <title>MANUAL: Psychic</title>
+    <id>tag:example.com,2026-04-04/entries/3487</id>
+    <published>2026-04-04T12:02:15.203738+00:00</published>
+    <updated>2026-04-04T12:02:15.203738+00:00</updated>
+    <link href="https://example.com/entries/3487.html"/>
+    <content type="html">[Kim Kitsuragi] Kim nods. Clean work. As always.</content>
+  </entry>
+  <entry>
+    <title>PASS: Psychic</title>
+    <id>tag:example.com,2026-04-04/entries/3486</id>
+    <published>2026-04-04T12:02:15.203624+00:00</published>
+    <updated>2026-04-04T12:02:15.203624+00:00</updated>
+    <link href="https://example.com/entries/3486.html"/>
+    <content type="html">Logic held on {&quot;file_path&quot;:&quot;/Users/mkurkin/experiments/marrow-paper/sections/03_method.tex&quot;,&quot;content&quot;:&quot;% Method (~2.5 pages)\n% 4.1 Problem Formulation\n% 4.2 Spectral Verifier\n% 4.3 Training Objective (GRPO + spectral reward)\n% 4.4 GORE as Controlled Environment\n&quot;}.
+[Logic | 4+4+4=12 vs DC11 | PASS | White]</content>
+  </entry>
+  <entry>
+    <title>MANUAL: Psychic</title>
+    <id>tag:example.com,2026-04-04/entries/3485</id>
+    <published>2026-04-04T12:02:13.275797+00:00</published>
+    <updated>2026-04-04T12:02:13.275797+00:00</updated>
+    <link href="https://example.com/entries/3485.html"/>
+    <content type="html">[Kim Kitsuragi] Kim frowns. &#39;This... didn&#39;t go as planned.&#39;</content>
+  </entry>
+</feed>

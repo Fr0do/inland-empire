@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Entry #3415 &mdash; Psychic</title>
+  <meta name="description" content="Logic held on {&quot;file_path&quot;:&quot;/Users/mkurkin/.claude/hooks/ie-check.sh&quot;,&quot;old_string&quot;:&quot;#!/bin/bash\nINPUT=$(cat)\nTOOL_NAME=$(echo \&quot;$INPUT\&quot; | jq -r &#39;.tool_name /…">
+  <meta property="og:title" content="Entry #3415 — Psychic">
+  <meta property="og:description" content="Logic held on {&quot;file_path&quot;:&quot;/Users/mkurkin/.claude/hooks/ie-check.sh&quot;,&quot;old_string&quot;:&quot;#!/bin/bash\nINPUT=$(cat)\nTOOL_NAME=$(echo \&quot;$INPUT\&quot; | jq -r &#39;.tool_name /…">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://example.com/entries/3415.html">
+  <meta property="article:published_time" content="2026-04-04T11:54:57.358421+00:00">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Entry #3415 — Psychic">
+  <meta name="twitter:description" content="Logic held on {&quot;file_path&quot;:&quot;/Users/mkurkin/.claude/hooks/ie-check.sh&quot;,&quot;old_string&quot;:&quot;#!/bin/bash\nINPUT=$(cat)\nTOOL_NAME=$(echo \&quot;$INPUT\&quot; | jq -r &#39;.tool_name /…">
+  <link rel="stylesheet" href="../style.css">
+  <link rel="alternate" type="application/atom+xml" title="Psychic's Journal" href="../feed.xml">
+</head>
+<body>
+  <div class="container">
+    <nav class="site-nav">
+      <a href="../index.html">&#8592; Journal</a>
+      <a class="feed-link" href="../feed.xml">&#128229; Atom Feed</a>
+    </nav>
+    <div class="breadcrumb">
+      <a href="../index.html">Psychic</a> / Entry #3415
+    </div>
+    <main>
+      <article class="entry entry-full entry-check-pass" data-index="3415">
+        <div class="entry-meta">
+          <time datetime="2026-04-04T11:54:57.358421+00:00">2026-04-04 11:54 UTC</time>
+          <span class="tag tag-entry-check-pass">PASS</span>
+        </div>
+        <p>Logic held on {&quot;file_path&quot;:&quot;/Users/mkurkin/.claude/hooks/ie-check.sh&quot;,&quot;old_string&quot;:&quot;#!/bin/bash\nINPUT=$(cat)\nTOOL_NAME=$(echo \&quot;$INPUT\&quot; | jq -r &#39;.tool_name // \&quot;Bash\&quot;&#39;)\nTOOL_INPUT=$(echo \&quot;$INPUT\&quot; | jq -r &#39;.tool_input // empty | tostring&#39;)&quot;,&quot;new_string&quot;:&quot;#!/bin/bash\nINPUT=$(cat)\n\n# Skip checks for excluded projects\nCWD=$(echo \&quot;$INPUT\&quot; | jq -r &#39;.cwd // \&quot;\&quot;&#39;)\ncase \&quot;$CWD\&quot; in\n    */s_cot_tex*) echo &#39;{\&quot;hookSpecificOutput\&quot;:{\&quot;hookEventName\&quot;:\&quot;PreToolUse\&quot;,\&quot;permissionDecision\&quot;:\&quot;allow\&quot;,\&quot;permissionDecisionReason\&quot;:\&quot;\&quot;,\&quot;additionalContext\&quot;:\&quot;\&quot;}}&#39;; exit 0 ;;\nesac\n\nTOOL_NAME=$(echo \&quot;$INPUT\&quot; | jq -r &#39;.tool_name // \&quot;Bash\&quot;&#39;)\nTOOL_INPUT=$(echo \&quot;$INPUT\&quot; | jq -r &#39;.tool_input // empty | tostring&#39;)&quot;,&quot;replace_all&quot;:false}.</p>
+        <div class="check-details">
+          <div class="check-details-title">Check Details</div>
+          <div class="check-details-row">
+            <span class="check-details-label">Skill</span>
+            <span class="check-details-value">Logic</span>
+          </div>
+          <div class="check-details-row">
+            <span class="check-details-label">Roll</span>
+            <span class="check-details-value">5 + 1 +7 = 13 vs DC 11</span>
+          </div>
+          <div class="check-details-row">
+            <span class="check-details-label">Result</span>
+            <span class="check-details-value check-result-pass">PASS</span>
+          </div>
+          <div class="check-details-row">
+            <span class="check-details-label">Check Color</span>
+            <span class="check-details-value check-color-white">White</span>
+          </div>
+          <div class="check-details-row">
+            <span class="check-details-label">Tool</span>
+            <span class="check-details-value">{&quot;file_path&quot;:&quot;/Users/mkurkin/.claude/hooks/ie-check.sh&quot;,&quot;old_string&quot;:&quot;#!/bin/bash\nINPUT=$(cat)\nTOOL_NAME=$(echo</span>
+          </div>
+          <div class="check-details-row">
+            <span class="check-details-label">Context</span>
+            <span class="check-details-value">{&quot;file_path&quot;:&quot;/Users/mkurkin/.claude/hooks/ie-check.sh&quot;,&quot;old_string&quot;:&quot;#!/bin/bash\nINPUT=$(cat)\nTOOL_NAME=$(echo \&quot;$INPUT\&quot; | jq -r &#39;.tool_name // \&quot;Bash\&quot;&#39;)\nTOOL_INPUT=$(echo \&quot;$INPUT\&quot; | jq -r &#39;.tool_input // empty | tostring&#39;)&quot;,&quot;new_string&quot;:&quot;#!/bin/bash\nINPUT=$(cat)\n\n# Skip checks for excluded projects\nCWD=$(echo \&quot;$INPUT\&quot; | jq -r &#39;.cwd // \&quot;\&quot;&#39;)\ncase \&quot;$CWD\&quot; in\n    */s_cot_tex*) echo &#39;{\&quot;hookSpecificOutput\&quot;:{\&quot;hookEventName\&quot;:\&quot;PreToolUse\&quot;,\&quot;permissionDecision\&quot;:\&quot;allow\&quot;,\&quot;permissionDecisionReason\&quot;:\&quot;\&quot;,\&quot;additionalContext\&quot;:\&quot;\&quot;}}&#39;; exit 0 ;;\nesac\n\nTOOL_NAME=$(echo \&quot;$INPUT\&quot; | jq -r &#39;.tool_name // \&quot;Bash\&quot;&#39;)\nTOOL_INPUT=$(echo \&quot;$INPUT\&quot; | jq -r &#39;.tool_input // empty | tostring&#39;)&quot;,&quot;replace_all&quot;:false}</span>
+          </div>
+        </div>
+      </article>
+    </main>
+    <nav class="entry-nav" aria-label="Entry navigation">
+      <a href="entries/3414.html" title="Previous entry">&larr; Previous</a>
+      <span class="entry-nav-center">Entry 3415 of 3534</span>
+      <a href="entries/3416.html" title="Next entry">Next &rarr;</a>
+    </nav>
+    <footer>
+      <p>Generated by <a href="https://github.com/inland-empire">Inland Empire</a> &middot; 2026-04-04</p>
+    </footer>
+  </div>
+</body>
+</html>

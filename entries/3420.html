@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Entry #3420 &mdash; Psychic</title>
+  <meta name="description" content="Authority held on {&quot;description&quot;:&quot;Implement ie respec command&quot;,&quot;prompt&quot;:&quot;Add a `ie respec` command to the inland-empire Rust CLI project that rebalances skill p…">
+  <meta property="og:title" content="Entry #3420 — Psychic">
+  <meta property="og:description" content="Authority held on {&quot;description&quot;:&quot;Implement ie respec command&quot;,&quot;prompt&quot;:&quot;Add a `ie respec` command to the inland-empire Rust CLI project that rebalances skill p…">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://example.com/entries/3420.html">
+  <meta property="article:published_time" content="2026-04-04T11:56:54.890419+00:00">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Entry #3420 — Psychic">
+  <meta name="twitter:description" content="Authority held on {&quot;description&quot;:&quot;Implement ie respec command&quot;,&quot;prompt&quot;:&quot;Add a `ie respec` command to the inland-empire Rust CLI project that rebalances skill p…">
+  <link rel="stylesheet" href="../style.css">
+  <link rel="alternate" type="application/atom+xml" title="Psychic's Journal" href="../feed.xml">
+</head>
+<body>
+  <div class="container">
+    <nav class="site-nav">
+      <a href="../index.html">&#8592; Journal</a>
+      <a class="feed-link" href="../feed.xml">&#128229; Atom Feed</a>
+    </nav>
+    <div class="breadcrumb">
+      <a href="../index.html">Psychic</a> / Entry #3420
+    </div>
+    <main>
+      <article class="entry entry-full entry-check-pass" data-index="3420">
+        <div class="entry-meta">
+          <time datetime="2026-04-04T11:56:54.890419+00:00">2026-04-04 11:56 UTC</time>
+          <span class="tag tag-entry-check-pass">PASS</span>
+        </div>
+        <p>Authority held on {&quot;description&quot;:&quot;Implement ie respec command&quot;,&quot;prompt&quot;:&quot;Add a `ie respec` command to the inland-empire Rust CLI project that rebalances skill points evenly across all 24 skills.\n\n## Context\n- The character has 24 skills stored in `ch.skills: HashMap&lt;Skill, u8&gt;`\n- Currently Interfacing is at ~13 while most others are at 1-3 due to historical bug\n- We need a command that redistributes all skill points evenly\n\n## What to implement\n\n### 1. In `src/main.rs`\n\nRead the file first!\n\nAdd to Commands enum (find InnerVoice variant, add before or after it):\n```rust\n/// Redistribute all skill points evenly across skills\nRespec,\n```\n\nAdd match arm:\n```rust\nCommands::Respec =&gt; cmd_respec(),\n```\n\nAdd handler function:\n```rust\nfn cmd_respec() {\n    let mut ch = Character::load_active().unwrap_or_else(|e| {\n        eprintln!(\&quot;{}\&quot;, e);\n        std::process::exit(1);\n    });\n    \n    // Calculate total points invested (subtract base 1 per skill)\n    let total_points: u32 = ch.skills.values().map(|&amp;v| v.saturating_sub(1) as u32).sum();\n    let num_skills = ch.skills.len() as u32;\n    \n    if total_points == 0 {\n        println!(\&quot;No skill points to redistribute.\&quot;);\n        return;\n    }\n    \n    let base_per_skill = (total_points / num_skills) as u8;\n    let remainder = (total_points % num_skills) as usize;\n    \n    // Sort skills for deterministic distribution of remainder\n    let mut skill_list: Vec&lt;Skill&gt; = ch.skills.keys().copied().collect();\n    skill_list.sort_by_key(|s| format!(\&quot;{}\&quot;, s));\n    \n    for (i, skill) in skill_list.iter().enumerate() {\n        let extra = if i &lt; remainder { 1u8 } else { 0u8 };\n        ch.skills.insert(*skill, 1 + base_per_skill + extra);\n    }\n    \n    ch.save().unwrap();\n    \n    println!(\&quot;RESPEC — {} points redistributed evenly\&quot;, total_points);\n    println!(\&quot;  Base: {} per skill (+1 base)\&quot;, base_per_skill);\n    if remainder &gt; 0 {\n        println!(\&quot;  {} skills got +1 extra\&quot;, remainder);\n    }\n    println!(\&quot;  All skills now at {}-{}\&quot;, 1 + base_per_skill, 1 + base_per_skill + if remainder &gt; 0 { 1 } else { 0 });\n}\n```\n\nNote: `Skill` must implement `Ord` or be sortable — it derives Copy, Eq, Hash. If it doesn&#39;t have Ord, sort by display string as shown above.\n\n### 2. Build and verify\n\nRun `cargo build` to verify zero errors.\n\nKeep it minimal — just this one function, nothing else.&quot;,&quot;model&quot;:&quot;sonnet&quot;}.</p>
+        <div class="check-details">
+          <div class="check-details-title">Check Details</div>
+          <div class="check-details-row">
+            <span class="check-details-label">Skill</span>
+            <span class="check-details-value">Authority</span>
+          </div>
+          <div class="check-details-row">
+            <span class="check-details-label">Roll</span>
+            <span class="check-details-value">4 + 6 +5 = 15 vs DC 11</span>
+          </div>
+          <div class="check-details-row">
+            <span class="check-details-label">Result</span>
+            <span class="check-details-value check-result-pass">PASS</span>
+          </div>
+          <div class="check-details-row">
+            <span class="check-details-label">Check Color</span>
+            <span class="check-details-value check-color-white">White</span>
+          </div>
+          <div class="check-details-row">
+            <span class="check-details-label">Tool</span>
+            <span class="check-details-value">{&quot;description&quot;:&quot;Implement</span>
+          </div>
+          <div class="check-details-row">
+            <span class="check-details-label">Context</span>
+            <span class="check-details-value">{&quot;description&quot;:&quot;Implement ie respec command&quot;,&quot;prompt&quot;:&quot;Add a `ie respec` command to the inland-empire Rust CLI project that rebalances skill points evenly across all 24 skills.\n\n## Context\n- The character has 24 skills stored in `ch.skills: HashMap&lt;Skill, u8&gt;`\n- Currently Interfacing is at ~13 while most others are at 1-3 due to historical bug\n- We need a command that redistributes all skill points evenly\n\n## What to implement\n\n### 1. In `src/main.rs`\n\nRead the file first!\n\nAdd to Commands enum (find InnerVoice variant, add before or after it):\n```rust\n/// Redistribute all skill points evenly across skills\nRespec,\n```\n\nAdd match arm:\n```rust\nCommands::Respec =&gt; cmd_respec(),\n```\n\nAdd handler function:\n```rust\nfn cmd_respec() {\n    let mut ch = Character::load_active().unwrap_or_else(|e| {\n        eprintln!(\&quot;{}\&quot;, e);\n        std::process::exit(1);\n    });\n    \n    // Calculate total points invested (subtract base 1 per skill)\n    let total_points: u32 = ch.skills.values().map(|&amp;v| v.saturating_sub(1) as u32).sum();\n    let num_skills = ch.skills.len() as u32;\n    \n    if total_points == 0 {\n        println!(\&quot;No skill points to redistribute.\&quot;);\n        return;\n    }\n    \n    let base_per_skill = (total_points / num_skills) as u8;\n    let remainder = (total_points % num_skills) as usize;\n    \n    // Sort skills for deterministic distribution of remainder\n    let mut skill_list: Vec&lt;Skill&gt; = ch.skills.keys().copied().collect();\n    skill_list.sort_by_key(|s| format!(\&quot;{}\&quot;, s));\n    \n    for (i, skill) in skill_list.iter().enumerate() {\n        let extra = if i &lt; remainder { 1u8 } else { 0u8 };\n        ch.skills.insert(*skill, 1 + base_per_skill + extra);\n    }\n    \n    ch.save().unwrap();\n    \n    println!(\&quot;RESPEC — {} points redistributed evenly\&quot;, total_points);\n    println!(\&quot;  Base: {} per skill (+1 base)\&quot;, base_per_skill);\n    if remainder &gt; 0 {\n        println!(\&quot;  {} skills got +1 extra\&quot;, remainder);\n    }\n    println!(\&quot;  All skills now at {}-{}\&quot;, 1 + base_per_skill, 1 + base_per_skill + if remainder &gt; 0 { 1 } else { 0 });\n}\n```\n\nNote: `Skill` must implement `Ord` or be sortable — it derives Copy, Eq, Hash. If it doesn&#39;t have Ord, sort by display string as shown above.\n\n### 2. Build and verify\n\nRun `cargo build` to verify zero errors.\n\nKeep it minimal — just this one function, nothing else.&quot;,&quot;model&quot;:&quot;sonnet&quot;}</span>
+          </div>
+        </div>
+      </article>
+    </main>
+    <nav class="entry-nav" aria-label="Entry navigation">
+      <a href="entries/3419.html" title="Previous entry">&larr; Previous</a>
+      <span class="entry-nav-center">Entry 3420 of 3534</span>
+      <a href="entries/3421.html" title="Next entry">Next &rarr;</a>
+    </nav>
+    <footer>
+      <p>Generated by <a href="https://github.com/inland-empire">Inland Empire</a> &middot; 2026-04-04</p>
+    </footer>
+  </div>
+</body>
+</html>

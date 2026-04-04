@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Entry #3325 &mdash; Psychic</title>
+  <meta name="description" content="Conceptualization held on {&quot;file_path&quot;:&quot;/Users/mkurkin/experiments/gore/merge_datasets.py&quot;,&quot;content&quot;:&quot;\&quot;\&quot;\&quot;Merge synthetic + Lean GORE datasets into a unified …">
+  <meta property="og:title" content="Entry #3325 — Psychic">
+  <meta property="og:description" content="Conceptualization held on {&quot;file_path&quot;:&quot;/Users/mkurkin/experiments/gore/merge_datasets.py&quot;,&quot;content&quot;:&quot;\&quot;\&quot;\&quot;Merge synthetic + Lean GORE datasets into a unified …">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://example.com/entries/3325.html">
+  <meta property="article:published_time" content="2026-04-04T11:52:07.226886+00:00">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Entry #3325 — Psychic">
+  <meta name="twitter:description" content="Conceptualization held on {&quot;file_path&quot;:&quot;/Users/mkurkin/experiments/gore/merge_datasets.py&quot;,&quot;content&quot;:&quot;\&quot;\&quot;\&quot;Merge synthetic + Lean GORE datasets into a unified …">
+  <link rel="stylesheet" href="../style.css">
+  <link rel="alternate" type="application/atom+xml" title="Psychic's Journal" href="../feed.xml">
+</head>
+<body>
+  <div class="container">
+    <nav class="site-nav">
+      <a href="../index.html">&#8592; Journal</a>
+      <a class="feed-link" href="../feed.xml">&#128229; Atom Feed</a>
+    </nav>
+    <div class="breadcrumb">
+      <a href="../index.html">Psychic</a> / Entry #3325
+    </div>
+    <main>
+      <article class="entry entry-full entry-check-pass" data-index="3325">
+        <div class="entry-meta">
+          <time datetime="2026-04-04T11:52:07.226886+00:00">2026-04-04 11:52 UTC</time>
+          <span class="tag tag-entry-check-pass">PASS</span>
+        </div>
+        <p>Conceptualization held on {&quot;file_path&quot;:&quot;/Users/mkurkin/experiments/gore/merge_datasets.py&quot;,&quot;content&quot;:&quot;\&quot;\&quot;\&quot;Merge synthetic + Lean GORE datasets into a unified training set.\&quot;\&quot;\&quot;\nimport json\nimport random\nimport argparse\n\ndef merge(args):\n    all_examples = []\n\n    for path in args.inputs:\n        count = 0\n        with open(path) as f:\n            for line in f:\n                ex = json.loads(line)\n                ex[\&quot;_source\&quot;] = path\n                all_examples.append(ex)\n                count += 1\n        print(\&quot;  %s: %d examples\&quot; % (path, count))\n\n    print(\&quot;Total before dedup: %d\&quot; % len(all_examples))\n\n    if args.shuffle:\n        random.seed(42)\n        random.shuffle(all_examples)\n\n    with open(args.output, \&quot;w\&quot;) as out:\n        for ex in all_examples:\n            del ex[\&quot;_source\&quot;]\n            out.write(json.dumps(ex) + \&quot;\\n\&quot;)\n\n    print(\&quot;Written: %d examples -&gt; %s\&quot; % (len(all_examples), args.output))\n\n\nif __name__ == \&quot;__main__\&quot;:\n    parser = argparse.ArgumentParser(description=\&quot;Merge GORE datasets\&quot;)\n    parser.add_argument(\&quot;inputs\&quot;, nargs=\&quot;+\&quot;, help=\&quot;Input JSONL files\&quot;)\n    parser.add_argument(\&quot;-o\&quot;, \&quot;--output\&quot;, default=\&quot;gore_merged_sft.jsonl\&quot;)\n    parser.add_argument(\&quot;--shuffle\&quot;, action=\&quot;store_true\&quot;, default=True)\n    args = parser.parse_args()\n    merge(args)\n&quot;}.</p>
+        <div class="check-details">
+          <div class="check-details-title">Check Details</div>
+          <div class="check-details-row">
+            <span class="check-details-label">Skill</span>
+            <span class="check-details-value">Conceptualization</span>
+          </div>
+          <div class="check-details-row">
+            <span class="check-details-label">Roll</span>
+            <span class="check-details-value">5 + 3 +5 = 13 vs DC 13</span>
+          </div>
+          <div class="check-details-row">
+            <span class="check-details-label">Result</span>
+            <span class="check-details-value check-result-pass">PASS</span>
+          </div>
+          <div class="check-details-row">
+            <span class="check-details-label">Check Color</span>
+            <span class="check-details-value check-color-white">White</span>
+          </div>
+          <div class="check-details-row">
+            <span class="check-details-label">Tool</span>
+            <span class="check-details-value">{&quot;file_path&quot;:&quot;/Users/mkurkin/experiments/gore/merge_datasets.py&quot;,&quot;content&quot;:&quot;\&quot;\&quot;\&quot;Merge</span>
+          </div>
+          <div class="check-details-row">
+            <span class="check-details-label">Context</span>
+            <span class="check-details-value">{&quot;file_path&quot;:&quot;/Users/mkurkin/experiments/gore/merge_datasets.py&quot;,&quot;content&quot;:&quot;\&quot;\&quot;\&quot;Merge synthetic + Lean GORE datasets into a unified training set.\&quot;\&quot;\&quot;\nimport json\nimport random\nimport argparse\n\ndef merge(args):\n    all_examples = []\n\n    for path in args.inputs:\n        count = 0\n        with open(path) as f:\n            for line in f:\n                ex = json.loads(line)\n                ex[\&quot;_source\&quot;] = path\n                all_examples.append(ex)\n                count += 1\n        print(\&quot;  %s: %d examples\&quot; % (path, count))\n\n    print(\&quot;Total before dedup: %d\&quot; % len(all_examples))\n\n    if args.shuffle:\n        random.seed(42)\n        random.shuffle(all_examples)\n\n    with open(args.output, \&quot;w\&quot;) as out:\n        for ex in all_examples:\n            del ex[\&quot;_source\&quot;]\n            out.write(json.dumps(ex) + \&quot;\\n\&quot;)\n\n    print(\&quot;Written: %d examples -&gt; %s\&quot; % (len(all_examples), args.output))\n\n\nif __name__ == \&quot;__main__\&quot;:\n    parser = argparse.ArgumentParser(description=\&quot;Merge GORE datasets\&quot;)\n    parser.add_argument(\&quot;inputs\&quot;, nargs=\&quot;+\&quot;, help=\&quot;Input JSONL files\&quot;)\n    parser.add_argument(\&quot;-o\&quot;, \&quot;--output\&quot;, default=\&quot;gore_merged_sft.jsonl\&quot;)\n    parser.add_argument(\&quot;--shuffle\&quot;, action=\&quot;store_true\&quot;, default=True)\n    args = parser.parse_args()\n    merge(args)\n&quot;}</span>
+          </div>
+        </div>
+      </article>
+    </main>
+    <nav class="entry-nav" aria-label="Entry navigation">
+      <a href="entries/3324.html" title="Previous entry">&larr; Previous</a>
+      <span class="entry-nav-center">Entry 3325 of 3534</span>
+      <a href="entries/3326.html" title="Next entry">Next &rarr;</a>
+    </nav>
+    <footer>
+      <p>Generated by <a href="https://github.com/inland-empire">Inland Empire</a> &middot; 2026-04-04</p>
+    </footer>
+  </div>
+</body>
+</html>

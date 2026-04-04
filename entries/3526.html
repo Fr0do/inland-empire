@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Entry #3526 &mdash; Psychic</title>
+  <meta name="description" content="Logic held on {&quot;file_path&quot;:&quot;/Users/mkurkin/experiments/marrow-paper/CLAUDE.md&quot;,&quot;content&quot;:&quot;# CLAUDE.md\n\nThis file provides guidance to Claude Code (claude.ai/c…">
+  <meta property="og:title" content="Entry #3526 — Psychic">
+  <meta property="og:description" content="Logic held on {&quot;file_path&quot;:&quot;/Users/mkurkin/experiments/marrow-paper/CLAUDE.md&quot;,&quot;content&quot;:&quot;# CLAUDE.md\n\nThis file provides guidance to Claude Code (claude.ai/c…">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://example.com/entries/3526.html">
+  <meta property="article:published_time" content="2026-04-04T12:03:53.947031+00:00">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Entry #3526 — Psychic">
+  <meta name="twitter:description" content="Logic held on {&quot;file_path&quot;:&quot;/Users/mkurkin/experiments/marrow-paper/CLAUDE.md&quot;,&quot;content&quot;:&quot;# CLAUDE.md\n\nThis file provides guidance to Claude Code (claude.ai/c…">
+  <link rel="stylesheet" href="../style.css">
+  <link rel="alternate" type="application/atom+xml" title="Psychic's Journal" href="../feed.xml">
+</head>
+<body>
+  <div class="container">
+    <nav class="site-nav">
+      <a href="../index.html">&#8592; Journal</a>
+      <a class="feed-link" href="../feed.xml">&#128229; Atom Feed</a>
+    </nav>
+    <div class="breadcrumb">
+      <a href="../index.html">Psychic</a> / Entry #3526
+    </div>
+    <main>
+      <article class="entry entry-full entry-check-pass" data-index="3526">
+        <div class="entry-meta">
+          <time datetime="2026-04-04T12:03:53.947031+00:00">2026-04-04 12:03 UTC</time>
+          <span class="tag tag-entry-check-pass">PASS</span>
+        </div>
+        <p>Logic held on {&quot;file_path&quot;:&quot;/Users/mkurkin/experiments/marrow-paper/CLAUDE.md&quot;,&quot;content&quot;:&quot;# CLAUDE.md\n\nThis file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.\n\n## Project\n\nLaTeX source for \&quot;Spectral-R1: Latent Energy-Based Verifiable Reward for Online RL without Labels\&quot; — NeurIPS 2026 submission.\n\nCore claim: Spectral structure in the latent space of a policy&#39;s rollouts provides a verifiable reward signal without ground-truth labels, enabling online RL where outcome supervision is unavailable.\n\nPaper plan: `self-reward-plan.md`\n\n### Lineage\n\nThis paper evolves from the Spectral-R1 line of work:\n- Previous paper repo: `../s_cot_tex` (NeurIPS 2025 submission — agentic decoding + energy-based OT)\n- Training code: `../s_cot_tex/s_cot/` and remote `kurkin-1:/workspace-SR004.nfs2/kurkin/s_cot`\n- Governance/bot: `../ourosss`\n\n## Build\n\n```bash\nmake            # Full build: pdflatex + bibtex (3-pass)\nmake clean      # Remove aux files\nmake distclean  # Remove aux + PDF\n```\n\nRequires pdflatex and bibtex. Style file: `neurips_2026.sty` (included, based on neurips_2025.sty).\n\n## Structure\n\n```\nmain.tex                — entry point; \\input{sections/XX_name}\nreferences.bib          — BibTeX references\nneurips_2026.sty        — NeurIPS style file\nsections/\n  00_abstract.tex       — abstract\n  01_introduction.tex   — introduction\n  02_related_work.tex   — related work\n  03_method.tex         — method (spectral verifier, training objective, GORE)\n  04_experiments.tex    — experiments and ablations\n  05_discussion.tex     — discussion and limitations\n  06_conclusion.tex     — conclusion\n  07_appendix.tex       — appendix\nfigures/                — figures directory\n```\n\n## LaTeX Conventions\n\n- One sentence per line in .tex files (clean diffs)\n- `\\input{sections/XX_name}` for all sections — do not inline content in main.tex\n- Use `[preprint]` option during development; switch to `[final]` for camera-ready\n- Figures go in `figures/` directory\n\n## Git Conventions\n\n- Commit prefixes: `[paper]` for content, `[fig]` for figures, `[bib]` for references\n- `fixes #N` in commits to auto-close issues\n\n## Key Technical Concepts\n\n- **Spectral Verifier**: reward signal derived from spectral structure of rollout representations (eigenspectrum of latent matrix), r(x) = -E(z)\n- **GRPO base**: Group Relative Policy Optimization with spectral reward replacing/augmenting outcome reward\n- **GORE**: formal language with deterministic interpreter used as controlled experimental environment\n- **KL regularization**: precision-weighted KL penalty (connection to predictive processing / active inference)\n- Base models: Qwen3-1.7B, Qwen3-7B with LoRA (r=16)\n\n## Key References\n\n- DeepSeek-R1 (Guo et al., 2025) — verifiable outcome reward\n- GRPO / DAPO / Dr.GRPO — policy optimization baselines\n- Let&#39;s Verify Step by Step (Lightman et al., 2023) — process reward\n- Math-Shepherd (Wang et al., 2024) — process reward without annotations\n- DIAYN (Eysenbach et al., 2018) — intrinsic reward baseline\n- Active Inference / FEP (Friston) — intro analogy only\n&quot;}.</p>
+        <div class="check-details">
+          <div class="check-details-title">Check Details</div>
+          <div class="check-details-row">
+            <span class="check-details-label">Skill</span>
+            <span class="check-details-value">Logic</span>
+          </div>
+          <div class="check-details-row">
+            <span class="check-details-label">Roll</span>
+            <span class="check-details-value">1 + 6 +4 = 11 vs DC 11</span>
+          </div>
+          <div class="check-details-row">
+            <span class="check-details-label">Result</span>
+            <span class="check-details-value check-result-pass">PASS</span>
+          </div>
+          <div class="check-details-row">
+            <span class="check-details-label">Check Color</span>
+            <span class="check-details-value check-color-white">White</span>
+          </div>
+          <div class="check-details-row">
+            <span class="check-details-label">Tool</span>
+            <span class="check-details-value">{&quot;file_path&quot;:&quot;/Users/mkurkin/experiments/marrow-paper/CLAUDE.md&quot;,&quot;content&quot;:&quot;#</span>
+          </div>
+          <div class="check-details-row">
+            <span class="check-details-label">Context</span>
+            <span class="check-details-value">{&quot;file_path&quot;:&quot;/Users/mkurkin/experiments/marrow-paper/CLAUDE.md&quot;,&quot;content&quot;:&quot;# CLAUDE.md\n\nThis file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.\n\n## Project\n\nLaTeX source for \&quot;Spectral-R1: Latent Energy-Based Verifiable Reward for Online RL without Labels\&quot; — NeurIPS 2026 submission.\n\nCore claim: Spectral structure in the latent space of a policy&#39;s rollouts provides a verifiable reward signal without ground-truth labels, enabling online RL where outcome supervision is unavailable.\n\nPaper plan: `self-reward-plan.md`\n\n### Lineage\n\nThis paper evolves from the Spectral-R1 line of work:\n- Previous paper repo: `../s_cot_tex` (NeurIPS 2025 submission — agentic decoding + energy-based OT)\n- Training code: `../s_cot_tex/s_cot/` and remote `kurkin-1:/workspace-SR004.nfs2/kurkin/s_cot`\n- Governance/bot: `../ourosss`\n\n## Build\n\n```bash\nmake            # Full build: pdflatex + bibtex (3-pass)\nmake clean      # Remove aux files\nmake distclean  # Remove aux + PDF\n```\n\nRequires pdflatex and bibtex. Style file: `neurips_2026.sty` (included, based on neurips_2025.sty).\n\n## Structure\n\n```\nmain.tex                — entry point; \\input{sections/XX_name}\nreferences.bib          — BibTeX references\nneurips_2026.sty        — NeurIPS style file\nsections/\n  00_abstract.tex       — abstract\n  01_introduction.tex   — introduction\n  02_related_work.tex   — related work\n  03_method.tex         — method (spectral verifier, training objective, GORE)\n  04_experiments.tex    — experiments and ablations\n  05_discussion.tex     — discussion and limitations\n  06_conclusion.tex     — conclusion\n  07_appendix.tex       — appendix\nfigures/                — figures directory\n```\n\n## LaTeX Conventions\n\n- One sentence per line in .tex files (clean diffs)\n- `\\input{sections/XX_name}` for all sections — do not inline content in main.tex\n- Use `[preprint]` option during development; switch to `[final]` for camera-ready\n- Figures go in `figures/` directory\n\n## Git Conventions\n\n- Commit prefixes: `[paper]` for content, `[fig]` for figures, `[bib]` for references\n- `fixes #N` in commits to auto-close issues\n\n## Key Technical Concepts\n\n- **Spectral Verifier**: reward signal derived from spectral structure of rollout representations (eigenspectrum of latent matrix), r(x) = -E(z)\n- **GRPO base**: Group Relative Policy Optimization with spectral reward replacing/augmenting outcome reward\n- **GORE**: formal language with deterministic interpreter used as controlled experimental environment\n- **KL regularization**: precision-weighted KL penalty (connection to predictive processing / active inference)\n- Base models: Qwen3-1.7B, Qwen3-7B with LoRA (r=16)\n\n## Key References\n\n- DeepSeek-R1 (Guo et al., 2025) — verifiable outcome reward\n- GRPO / DAPO / Dr.GRPO — policy optimization baselines\n- Let&#39;s Verify Step by Step (Lightman et al., 2023) — process reward\n- Math-Shepherd (Wang et al., 2024) — process reward without annotations\n- DIAYN (Eysenbach et al., 2018) — intrinsic reward baseline\n- Active Inference / FEP (Friston) — intro analogy only\n&quot;}</span>
+          </div>
+        </div>
+      </article>
+    </main>
+    <nav class="entry-nav" aria-label="Entry navigation">
+      <a href="entries/3525.html" title="Previous entry">&larr; Previous</a>
+      <span class="entry-nav-center">Entry 3526 of 3534</span>
+      <a href="entries/3527.html" title="Next entry">Next &rarr;</a>
+    </nav>
+    <footer>
+      <p>Generated by <a href="https://github.com/inland-empire">Inland Empire</a> &middot; 2026-04-04</p>
+    </footer>
+  </div>
+</body>
+</html>

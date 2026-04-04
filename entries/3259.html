@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Entry #3259 &mdash; Psychic</title>
+  <meta name="description" content="Conceptualization held on {&quot;file_path&quot;:&quot;/Users/mkurkin/experiments/gore/data/debug_failures.py&quot;,&quot;content&quot;:&quot;\&quot;\&quot;\&quot;Debug conversion failures in leandojo2gore.\&quot;\&quot;…">
+  <meta property="og:title" content="Entry #3259 — Psychic">
+  <meta property="og:description" content="Conceptualization held on {&quot;file_path&quot;:&quot;/Users/mkurkin/experiments/gore/data/debug_failures.py&quot;,&quot;content&quot;:&quot;\&quot;\&quot;\&quot;Debug conversion failures in leandojo2gore.\&quot;\&quot;…">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://example.com/entries/3259.html">
+  <meta property="article:published_time" content="2026-04-02T23:45:32.149759+00:00">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Entry #3259 — Psychic">
+  <meta name="twitter:description" content="Conceptualization held on {&quot;file_path&quot;:&quot;/Users/mkurkin/experiments/gore/data/debug_failures.py&quot;,&quot;content&quot;:&quot;\&quot;\&quot;\&quot;Debug conversion failures in leandojo2gore.\&quot;\&quot;…">
+  <link rel="stylesheet" href="../style.css">
+  <link rel="alternate" type="application/atom+xml" title="Psychic's Journal" href="../feed.xml">
+</head>
+<body>
+  <div class="container">
+    <nav class="site-nav">
+      <a href="../index.html">&#8592; Journal</a>
+      <a class="feed-link" href="../feed.xml">&#128229; Atom Feed</a>
+    </nav>
+    <div class="breadcrumb">
+      <a href="../index.html">Psychic</a> / Entry #3259
+    </div>
+    <main>
+      <article class="entry entry-full entry-check-pass" data-index="3259">
+        <div class="entry-meta">
+          <time datetime="2026-04-02T23:45:32.149759+00:00">2026-04-02 23:45 UTC</time>
+          <span class="tag tag-entry-check-pass">PASS</span>
+        </div>
+        <p>Conceptualization held on {&quot;file_path&quot;:&quot;/Users/mkurkin/experiments/gore/data/debug_failures.py&quot;,&quot;content&quot;:&quot;\&quot;\&quot;\&quot;Debug conversion failures in leandojo2gore.\&quot;\&quot;\&quot;\nimport json\nimport sys\nimport os\nsys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))\nimport lean2gore\nimport gore as gore_module\n\nwith open(\&quot;leandojo/train.json\&quot;) as f:\n    data = json.load(f)\n\ncandidates = [e for e in data if e.get(\&quot;traced_tactics\&quot;) and len(e[\&quot;traced_tactics\&quot;]) &gt;= 2 and len(e[\&quot;traced_tactics\&quot;]) &lt;= 50]\n\nfail_reasons = {\&quot;parse\&quot;: 0, \&quot;runtime\&quot;: 0}\nfail_examples = []\n\nfor ex in candidates[:500]:\n    name = ex.get(\&quot;full_name\&quot;, \&quot;anon\&quot;)\n    tactic_lines = [t[\&quot;tactic\&quot;] for t in ex[\&quot;traced_tactics\&quot;]]\n    gore_src = lean2gore.proof_to_gore(tactic_lines, name)\n\n    try:\n        program = gore_module.parse_gore(gore_src)\n    except Exception as e:\n        fail_reasons[\&quot;parse\&quot;] += 1\n        if len(fail_examples) &lt; 3:\n            fail_examples.append((\&quot;parse\&quot;, name, str(e), gore_src))\n        continue\n\n    entry = lean2gore.sanitize_name(name)\n    try:\n        interp = gore_module.GoreInterpreter(program)\n        solutions = interp.run(entry, [gore_module.Atom(\&quot;goal\&quot;)])\n    except Exception as e:\n        fail_reasons[\&quot;runtime\&quot;] += 1\n        if len(fail_examples) &lt; 6:\n            fail_examples.append((\&quot;runtime\&quot;, name, str(e), gore_src))\n        continue\n\nprint(\&quot;Failure breakdown:\&quot;, fail_reasons)\nprint()\nfor kind, name, err, src in fail_examples:\n    print(\&quot;--- %s FAIL: %s ---\&quot; % (kind, name))\n    print(\&quot;Error:\&quot;, err)\n    print(src[:300])\n    print()\n&quot;}.</p>
+        <div class="check-details">
+          <div class="check-details-title">Check Details</div>
+          <div class="check-details-row">
+            <span class="check-details-label">Skill</span>
+            <span class="check-details-value">Conceptualization</span>
+          </div>
+          <div class="check-details-row">
+            <span class="check-details-label">Roll</span>
+            <span class="check-details-value">4 + 6 +6 = 16 vs DC 13</span>
+          </div>
+          <div class="check-details-row">
+            <span class="check-details-label">Result</span>
+            <span class="check-details-value check-result-pass">PASS</span>
+          </div>
+          <div class="check-details-row">
+            <span class="check-details-label">Check Color</span>
+            <span class="check-details-value check-color-white">White</span>
+          </div>
+          <div class="check-details-row">
+            <span class="check-details-label">Tool</span>
+            <span class="check-details-value">{&quot;file_path&quot;:&quot;/Users/mkurkin/experiments/gore/data/debug_failures.py&quot;,&quot;content&quot;:&quot;\&quot;\&quot;\&quot;Debug</span>
+          </div>
+          <div class="check-details-row">
+            <span class="check-details-label">Context</span>
+            <span class="check-details-value">{&quot;file_path&quot;:&quot;/Users/mkurkin/experiments/gore/data/debug_failures.py&quot;,&quot;content&quot;:&quot;\&quot;\&quot;\&quot;Debug conversion failures in leandojo2gore.\&quot;\&quot;\&quot;\nimport json\nimport sys\nimport os\nsys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))\nimport lean2gore\nimport gore as gore_module\n\nwith open(\&quot;leandojo/train.json\&quot;) as f:\n    data = json.load(f)\n\ncandidates = [e for e in data if e.get(\&quot;traced_tactics\&quot;) and len(e[\&quot;traced_tactics\&quot;]) &gt;= 2 and len(e[\&quot;traced_tactics\&quot;]) &lt;= 50]\n\nfail_reasons = {\&quot;parse\&quot;: 0, \&quot;runtime\&quot;: 0}\nfail_examples = []\n\nfor ex in candidates[:500]:\n    name = ex.get(\&quot;full_name\&quot;, \&quot;anon\&quot;)\n    tactic_lines = [t[\&quot;tactic\&quot;] for t in ex[\&quot;traced_tactics\&quot;]]\n    gore_src = lean2gore.proof_to_gore(tactic_lines, name)\n\n    try:\n        program = gore_module.parse_gore(gore_src)\n    except Exception as e:\n        fail_reasons[\&quot;parse\&quot;] += 1\n        if len(fail_examples) &lt; 3:\n            fail_examples.append((\&quot;parse\&quot;, name, str(e), gore_src))\n        continue\n\n    entry = lean2gore.sanitize_name(name)\n    try:\n        interp = gore_module.GoreInterpreter(program)\n        solutions = interp.run(entry, [gore_module.Atom(\&quot;goal\&quot;)])\n    except Exception as e:\n        fail_reasons[\&quot;runtime\&quot;] += 1\n        if len(fail_examples) &lt; 6:\n            fail_examples.append((\&quot;runtime\&quot;, name, str(e), gore_src))\n        continue\n\nprint(\&quot;Failure breakdown:\&quot;, fail_reasons)\nprint()\nfor kind, name, err, src in fail_examples:\n    print(\&quot;--- %s FAIL: %s ---\&quot; % (kind, name))\n    print(\&quot;Error:\&quot;, err)\n    print(src[:300])\n    print()\n&quot;}</span>
+          </div>
+        </div>
+      </article>
+    </main>
+    <nav class="entry-nav" aria-label="Entry navigation">
+      <a href="entries/3258.html" title="Previous entry">&larr; Previous</a>
+      <span class="entry-nav-center">Entry 3259 of 3534</span>
+      <a href="entries/3260.html" title="Next entry">Next &rarr;</a>
+    </nav>
+    <footer>
+      <p>Generated by <a href="https://github.com/inland-empire">Inland Empire</a> &middot; 2026-04-04</p>
+    </footer>
+  </div>
+</body>
+</html>
