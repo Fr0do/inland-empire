@@ -208,6 +208,8 @@ enum Commands {
         #[arg(long)]
         no_open: bool,
     },
+    /// Redistribute all skill points evenly across skills
+    Respec,
     /// Show your inner voice companion status
     #[command(name = "inner-voice")]
     InnerVoice,
@@ -280,9 +282,51 @@ fn main() {
         Commands::Compare { name1, name2 } => cmd_compare(&name1, name2.as_deref()),
         Commands::Card { name, output } => cmd_card(name, output),
         Commands::Dashboard { port, no_open } => cmd_dashboard(port, no_open),
+        Commands::Respec => cmd_respec(),
         Commands::InnerVoice => cmd_inner_voice(),
         Commands::Difficulty { tier } => cmd_difficulty(&tier),
     }
+}
+
+fn cmd_respec() {
+    let mut ch = Character::load_active().unwrap_or_else(|e| {
+        eprintln!("{}", e);
+        std::process::exit(1);
+    });
+
+    // Calculate total points invested (subtract base 1 per skill)
+    let total_points: u32 = ch.skills.values().map(|&v| v.saturating_sub(1) as u32).sum();
+    let num_skills = ch.skills.len() as u32;
+
+    if total_points == 0 {
+        println!("No skill points to redistribute.");
+        return;
+    }
+
+    let base_per_skill = (total_points / num_skills) as u8;
+    let remainder = (total_points % num_skills) as usize;
+
+    // Sort skills for deterministic distribution of remainder
+    let mut skill_list: Vec<Skill> = ch.skills.keys().copied().collect();
+    skill_list.sort_by_key(|s| format!("{}", s));
+
+    for (i, skill) in skill_list.iter().enumerate() {
+        let extra = if i < remainder { 1u8 } else { 0u8 };
+        ch.skills.insert(*skill, 1 + base_per_skill + extra);
+    }
+
+    ch.save().unwrap();
+
+    println!("RESPEC — {} points redistributed evenly", total_points);
+    println!("  Base: {} per skill (+1 base)", base_per_skill);
+    if remainder > 0 {
+        println!("  {} skills got +1 extra", remainder);
+    }
+    println!(
+        "  All skills now at {}-{}",
+        1 + base_per_skill,
+        1 + base_per_skill + if remainder > 0 { 1 } else { 0 }
+    );
 }
 
 fn cmd_new(name: &str, archetype: &str, signature: Option<&str>) {
