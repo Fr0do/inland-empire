@@ -3,6 +3,7 @@ mod agents;
 mod cases;
 mod character;
 mod checks;
+mod config;
 mod companion;
 mod companions;
 mod copotype;
@@ -23,6 +24,7 @@ mod time;
 mod types;
 
 use character::{list_profiles, Character, Thought, ThoughtPhase, ARCHETYPES};
+use config::Config;
 use chrono::Utc;
 use checks::{passive_interjections, perform_check, Difficulty, DifficultyTier};
 use clap::{Parser, Subcommand};
@@ -220,6 +222,14 @@ enum Commands {
     },
     /// Show thought cabinet with research progress
     Thoughts,
+    /// Undo last change to active character
+    Undo,
+    /// Show or set global config
+    Config {
+        /// Set a config value: key=value (e.g. default_difficulty=casual)
+        #[arg(short, long)]
+        set: Option<String>,
+    },
 }
 
 #[derive(Subcommand)]
@@ -289,6 +299,8 @@ fn main() {
         Commands::InnerVoice => cmd_inner_voice(),
         Commands::Difficulty { tier } => cmd_difficulty(&tier),
         Commands::Thoughts => cmd_thoughts(),
+        Commands::Undo => cmd_undo(),
+        Commands::Config { set } => cmd_config(set.as_deref()),
     }
 }
 
@@ -340,7 +352,9 @@ fn cmd_new(name: &str, archetype: &str, signature: Option<&str>) {
             std::process::exit(1);
         })
     });
-    let ch = Character::new(name.to_string(), archetype, sig);
+    let mut ch = Character::new(name.to_string(), archetype, sig);
+    let cfg = Config::load();
+    ch.difficulty_tier = cfg.default_difficulty;
     ch.save().expect("Failed to save character");
     ch.set_active().expect("Failed to set active");
     println!("{}", display::character_sheet(&ch));
@@ -354,7 +368,8 @@ fn cmd_status(art: bool, oneline: bool) {
     match Character::load_active() {
         Ok(mut ch) => {
             // Apply skill atrophy before display
-            let atrophy = ch.apply_atrophy();
+            let cfg = Config::load();
+            let atrophy = if cfg.atrophy_days > 0 { ch.apply_atrophy() } else { vec![] };
             if !atrophy.is_empty() {
                 use colored::Colorize;
                 println!("{}", "⚠ SKILL ATROPHY — unused skills have weakened".yellow().bold());
@@ -741,14 +756,17 @@ fn cmd_hook_check(tool: &str, context: &str) {
         }
     }
 
+    let cfg = Config::load();
     let color = CheckColor::for_action(tool, context);
     let ctx = if context.is_empty() {
         format!("{} action", tool)
     } else {
         context.to_string()
     };
-    for ij in passive_interjections(&ch, tool, &ctx) {
-        eprintln!("{}", ij.format_de_style());
+    if cfg.show_interjections {
+        for ij in passive_interjections(&ch, tool, &ctx) {
+            eprintln!("{}", ij.format_de_style());
+        }
     }
     let is_signature = ch.signature_skill == Some(skill);
     let result = perform_check(&mut ch, skill, threshold, &ctx, color, is_signature);
@@ -801,17 +819,19 @@ fn cmd_hook_check(tool: &str, context: &str) {
     }
 
     // Inner voice commentary
-    if let Some(mut voice) = ch.inner_voice.clone() {
-        voice.update_after_check(&ch, result.success, result.critical_success);
-        let iv_event = companion::CompanionEvent::PostCheck {
-            success: result.success,
-            critical: result.critical_success,
-            skill,
-        };
-        if let Some(text) = companion::commentary(&voice, iv_event, &ch) {
-            eprintln!("{}", companion::format_companion_line(&voice, &text));
+    if cfg.show_inner_voice {
+        if let Some(mut voice) = ch.inner_voice.clone() {
+            voice.update_after_check(&ch, result.success, result.critical_success);
+            let iv_event = companion::CompanionEvent::PostCheck {
+                success: result.success,
+                critical: result.critical_success,
+                skill,
+            };
+            if let Some(text) = companion::commentary(&voice, iv_event, &ch) {
+                eprintln!("{}", companion::format_companion_line(&voice, &text));
+            }
+            ch.inner_voice = Some(voice);
         }
-        ch.inner_voice = Some(voice);
     }
 
     ch.save().ok();
@@ -1542,5 +1562,67 @@ fn cmd_card(name: Option<String>, output: Option<String>) {
             println!("Generated card: {}", path);
         }
         Err(e) => eprintln!("{}", e),
+    }
+}
+
+fn cmd_undo() {
+    let ch = Character::load_active().unwrap_or_else(|e| {
+        eprintln!("{}", e);
+        std::process::exit(1);
+    });
+    match Character::undo(&ch.name) {
+        Ok(()) => {
+            let restored = Character::load(&ch.name).unwrap();
+            println!(
+                "↩ Restored {} to previous state (level {}, {} XP)",
+                restored.name, restored.level, restored.xp
+            );
+        }
+        Err(e) => {
+            eprintln!("error: {}", e);
+            std::process::exit(1);
+        }
+    }
+}
+
+fn cmd_config(set: Option<&str>) {
+    let mut cfg = Config::load();
+    if let Some(kv) = set {
+        let parts: Vec<&str> = kv.splitn(2, '=').collect();
+        if parts.len() != 2 {
+            eprintln!("error: use key=value format");
+            std::process::exit(1);
+        }
+        let (key, val) = (parts[0].trim(), parts[1].trim());
+        match key {
+            "default_difficulty" => match val.parse::<DifficultyTier>() {
+                Ok(t) => cfg.default_difficulty = t,
+                Err(e) => {
+                    eprintln!("error: {}", e);
+                    std::process::exit(1);
+                }
+            },
+            "show_interjections" => cfg.show_interjections = val == "true" || val == "1",
+            "show_inner_voice" => cfg.show_inner_voice = val == "true" || val == "1",
+            "atrophy_days" => match val.parse::<u32>() {
+                Ok(n) => cfg.atrophy_days = n,
+                Err(_) => {
+                    eprintln!("error: atrophy_days must be a number");
+                    std::process::exit(1);
+                }
+            },
+            _ => {
+                eprintln!("error: unknown config key '{}'", key);
+                std::process::exit(1);
+            }
+        }
+        cfg.save().unwrap_or_else(|e| eprintln!("warning: {}", e));
+        println!("✓ {} = {}", key, val);
+    } else {
+        println!("Config: {}", Config::path().display());
+        println!("  default_difficulty = {}", cfg.default_difficulty);
+        println!("  show_interjections = {}", cfg.show_interjections);
+        println!("  show_inner_voice   = {}", cfg.show_inner_voice);
+        println!("  atrophy_days       = {} (0 = disabled)", cfg.atrophy_days);
     }
 }

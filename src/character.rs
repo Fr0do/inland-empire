@@ -557,6 +557,11 @@ impl Character {
         if let Some(parent) = path.parent() {
             std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
         }
+        // Save backup before overwriting
+        if path.exists() {
+            let bak_path = path.with_extension("bak");
+            let _ = std::fs::copy(&path, &bak_path);
+        }
         // Lock the file for writing
         let lock_path = path.with_extension("lock");
         let lock_file = std::fs::File::create(&lock_path).map_err(|e| e.to_string())?;
@@ -568,6 +573,16 @@ impl Character {
         std::fs::rename(&tmp_path, &path).map_err(|e| e.to_string())?;
         // Unlock
         fs2::FileExt::unlock(&lock_file).map_err(|e| e.to_string())?;
+        Ok(())
+    }
+
+    pub fn undo(name: &str) -> Result<(), String> {
+        let path = profile_path(name);
+        let bak_path = path.with_extension("bak");
+        if !bak_path.exists() {
+            return Err("No backup found. Nothing to undo.".into());
+        }
+        std::fs::copy(&bak_path, &path).map_err(|e| e.to_string())?;
         Ok(())
     }
 
