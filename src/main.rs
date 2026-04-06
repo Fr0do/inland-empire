@@ -23,6 +23,7 @@ mod time;
 mod types;
 
 use character::{list_profiles, Character, Thought, ThoughtPhase, ARCHETYPES};
+use chrono::Utc;
 use checks::{passive_interjections, perform_check, Difficulty, DifficultyTier};
 use clap::{Parser, Subcommand};
 use equipment::{catalog as equipment_catalog, EquipSlot};
@@ -217,6 +218,8 @@ enum Commands {
     Difficulty {
         tier: String,
     },
+    /// Show thought cabinet with research progress
+    Thoughts,
 }
 
 #[derive(Subcommand)]
@@ -285,6 +288,7 @@ fn main() {
         Commands::Respec => cmd_respec(),
         Commands::InnerVoice => cmd_inner_voice(),
         Commands::Difficulty { tier } => cmd_difficulty(&tier),
+        Commands::Thoughts => cmd_thoughts(),
     }
 }
 
@@ -348,7 +352,28 @@ fn cmd_new(name: &str, archetype: &str, signature: Option<&str>) {
 
 fn cmd_status(art: bool, oneline: bool) {
     match Character::load_active() {
-        Ok(ch) => {
+        Ok(mut ch) => {
+            // Apply skill atrophy before display
+            let atrophy = ch.apply_atrophy();
+            if !atrophy.is_empty() {
+                use colored::Colorize;
+                println!("{}", "⚠ SKILL ATROPHY — unused skills have weakened".yellow().bold());
+                for (skill, lost) in &atrophy {
+                    let current = ch.skills.get(skill).copied().unwrap_or(1);
+                    let old = current + lost;
+                    let last_used = ch.skill_last_used.get(skill).copied().unwrap_or(ch.created_at);
+                    let days = (Utc::now() - last_used).num_days();
+                    println!(
+                        "  {}: {} → {} (unused {} days)",
+                        skill,
+                        old.to_string().yellow(),
+                        current.to_string().red(),
+                        days
+                    );
+                }
+                println!();
+                ch.save().unwrap_or_else(|e| eprintln!("Save error: {}", e));
+            }
             if oneline {
                 println!("{}", display::status_oneline(&ch));
                 return;
@@ -586,6 +611,79 @@ fn cmd_think(name: &str, description: &str, modifiers: &str) {
             ch.save().expect("Failed to save");
         }
         Err(e) => eprintln!("{}", e),
+    }
+}
+
+fn cmd_thoughts() {
+    let ch = match Character::load_active() {
+        Ok(c) => c,
+        Err(e) => {
+            eprintln!("{}", e);
+            return;
+        }
+    };
+    use colored::Colorize;
+    if ch.thoughts.is_empty() {
+        println!("{}", "THOUGHT CABINET (empty)".bold());
+        println!("  No thoughts equipped. Use: ie think <name> -m skill:+N");
+        return;
+    }
+    println!("{}", format!("THOUGHT CABINET ({} thoughts)", ch.thoughts.len()).bold());
+    println!();
+    for thought in &ch.thoughts {
+        match thought.phase {
+            ThoughtPhase::Researching { checks_remaining } => {
+                println!(
+                    "  {} {} — {} ({})",
+                    "●".yellow(),
+                    thought.name.yellow().bold(),
+                    "researching".yellow(),
+                    format!("{} checks remaining", checks_remaining).dimmed()
+                );
+                if !thought.research_modifiers.is_empty() {
+                    let mods: Vec<String> = thought
+                        .research_modifiers
+                        .iter()
+                        .map(|(s, v)| format!("{} {:+}", s, v))
+                        .collect();
+                    println!(
+                        "    {}",
+                        format!("Modifiers while researching: {}", mods.join(", ")).dimmed()
+                    );
+                }
+                if !thought.skill_modifiers.is_empty() {
+                    let mods: Vec<String> = thought
+                        .skill_modifiers
+                        .iter()
+                        .map(|(s, v)| format!("{} {:+}", s, v))
+                        .collect();
+                    println!("    Will grant: {}", mods.join(", ").green());
+                }
+                if checks_remaining == 1 {
+                    println!("    {}", "Almost there...".italic().dimmed());
+                }
+            }
+            ThoughtPhase::Internalized => {
+                println!(
+                    "  {} {} — {}",
+                    "✓".green(),
+                    thought.name.green().bold(),
+                    "internalized".green()
+                );
+                if !thought.skill_modifiers.is_empty() {
+                    let mods: Vec<String> = thought
+                        .skill_modifiers
+                        .iter()
+                        .map(|(s, v)| format!("{} {:+}", s, v))
+                        .collect();
+                    println!("    {}", mods.join(", ").green());
+                }
+                if !thought.description.is_empty() {
+                    println!("    {}", thought.description.dimmed().italic());
+                }
+            }
+        }
+        println!();
     }
 }
 

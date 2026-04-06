@@ -68,12 +68,12 @@ impl Difficulty {
             Difficulty::Heroic => 18,
             Difficulty::Godly => 20,
         };
-        let divisor = match tier {
-            DifficultyTier::Casual => 5,
-            DifficultyTier::Normal => 3,
-            DifficultyTier::Hardcore => 2,
+        let max_scaling: u8 = match tier {
+            DifficultyTier::Casual => 1,   // ~90% success rate
+            DifficultyTier::Normal => 3,   // ~75% success rate
+            DifficultyTier::Hardcore => 5, // ~50% success rate
         };
-        let scaling = (level.saturating_sub(1) / divisor) as u8;
+        let scaling = ((level.saturating_sub(1) / 3) as u8).min(max_scaling);
         base.saturating_add(scaling).min(20)
     }
     pub fn from_threshold(n: u8) -> Self {
@@ -331,6 +331,13 @@ pub fn perform_check(
     check_color: CheckColor,
     is_signature: bool,
 ) -> CheckResult {
+    // Morale penalty/bonus to DC
+    let mut threshold = threshold;
+    if character.morale <= 2 {
+        threshold = threshold.saturating_add(1);
+    } else if character.morale >= character.max_morale {
+        threshold = threshold.saturating_sub(1).max(6);
+    }
     let mut result = roll_check(
         character,
         skill,

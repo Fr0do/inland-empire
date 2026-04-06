@@ -61,6 +61,8 @@ pub struct Character {
     pub inner_voice: Option<InnerVoice>,
     #[serde(default)]
     pub difficulty_tier: DifficultyTier,
+    #[serde(default)]
+    pub skill_last_used: HashMap<Skill, DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -210,6 +212,7 @@ impl Character {
             achievements: HashSet::new(),
             inner_voice: None,
             difficulty_tier: DifficultyTier::default(),
+            skill_last_used: HashMap::new(),
         }
     }
 
@@ -477,6 +480,7 @@ impl Character {
             };
             self.journal.push(entry);
         }
+        self.skill_last_used.insert(record.skill, Utc::now());
         self.check_history.push(record);
         self.tick_effects();
         // Progress researching thoughts
@@ -519,6 +523,33 @@ impl Character {
             self.achievements.insert(ach);
         }
         self.add_xp(xp)
+    }
+
+    pub fn apply_atrophy(&mut self) -> Vec<(Skill, u8)> {
+        let now = Utc::now();
+        let mut losses: Vec<(Skill, u8)> = Vec::new();
+        for skill in Skill::all() {
+            let last_used = match self.skill_last_used.get(skill).copied() {
+                Some(t) => t,
+                None => continue, // never tracked → not eligible for atrophy
+            };
+            let days_since = (now - last_used).num_days();
+            let current = self.skills.get(skill).copied().unwrap_or(1);
+            if days_since >= 14 && current > 1 {
+                let new_val = current.saturating_sub(2).max(1);
+                let lost = current - new_val;
+                self.skills.insert(*skill, new_val);
+                losses.push((*skill, lost));
+            } else if days_since >= 7 && current > 1 {
+                let new_val = current - 1;
+                self.skills.insert(*skill, new_val);
+                losses.push((*skill, 1));
+            }
+        }
+        if !losses.is_empty() {
+            self.updated_at = Utc::now();
+        }
+        losses
     }
 
     pub fn save(&self) -> Result<(), String> {
