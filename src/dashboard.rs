@@ -1219,7 +1219,7 @@ fn page_checks(ch: &Character) -> String {
     let mut skill_stats: Vec<(Skill, usize, usize)> = Skill::all()
         .iter()
         .filter_map(|s| {
-            stats.by_skill.get(s).map(|(succ, total)| (*s, *succ, *total))
+            stats.by_skill.get(s).map(|st| (*s, st.successes, st.total))
         })
         .collect();
     skill_stats.sort_by(|a, b| b.2.cmp(&a.2));

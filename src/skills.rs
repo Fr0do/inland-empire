@@ -336,3 +336,21 @@ impl std::str::FromStr for Skill {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_for_tool() {
+        assert_eq!(Skill::for_tool("Bash", "git push origin main"), Skill::Electrochemistry);
+        assert_eq!(Skill::for_tool("Bash", "git commit -m 'fix'"), Skill::Rhetoric);
+        assert_eq!(Skill::for_tool("Bash", "cargo test"), Skill::Logic);
+        assert_eq!(Skill::for_tool("Bash", "rm -rf node_modules"), Skill::HalfLight);
+        assert_eq!(Skill::for_tool("Read", "src/checks.rs"), Skill::Perception);
+        assert_eq!(Skill::for_tool("Read", "config.toml"), Skill::VisualCalculus);
+        assert_eq!(Skill::for_tool("Edit", "src/main_test.rs"), Skill::Logic);
+        assert_eq!(Skill::for_tool("Bash", "docker-compose up"), Skill::Interfacing);
+        assert_eq!(Skill::for_tool("Bash", "echo hello"), Skill::Drama);
+    }
+}

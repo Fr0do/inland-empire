@@ -224,18 +224,19 @@ pub fn status_oneline(ch: &Character) -> String {
     let time = TimeOfDay::current();
     let hearts =
         "❤".repeat(ch.health as usize) + &"🖤".repeat((ch.max_health - ch.health) as usize);
+    let morale_bar =
+        "💙".repeat(ch.morale as usize) + &"🩶".repeat((ch.max_morale - ch.morale) as usize);
     let sig = ch
         .signature_skill
         .map(|s| format!("★{}", s))
         .unwrap_or_default();
     format!(
-        "{} L{} {} {} 💭{}/{} XP:{}/{} {}{}",
+        "{} L{} {} {} {} XP:{}/{} {}{}",
         ch.name,
         ch.level,
         hearts,
+        morale_bar,
         time.icon(),
-        ch.morale,
-        ch.max_morale,
         ch.xp,
         ch.xp_to_next_level(),
         sig,

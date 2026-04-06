@@ -1,9 +1,18 @@
 use crate::character::Character;
 use crate::journal::EntryType;
 use crate::skills::Skill;
+use chrono::{DateTime, Utc};
 use colored::Colorize;
 use serde::Serialize;
 use std::collections::HashMap;
+
+#[derive(Serialize)]
+pub struct SkillStat {
+    pub successes: usize,
+    pub total: usize,
+    pub avg_roll: f32,
+    pub last_used: Option<DateTime<Utc>>,
+}
 
 #[derive(Serialize)]
 pub struct Stats {
@@ -15,14 +24,17 @@ pub struct Stats {
     pub current_streak: i32, // positive = success streak, negative = fail streak
     pub best_streak: usize,
     pub worst_streak: usize,
-    pub by_skill: HashMap<Skill, (usize, usize)>, // (successes, total)
-    pub by_tool: HashMap<String, usize>,          // tool -> count
+    pub by_skill: HashMap<Skill, SkillStat>,
+    pub by_tool: HashMap<String, usize>, // tool -> count
     pub total_xp: u32,
     pub substances_used: HashMap<String, usize>,
 }
 
 pub fn compute_stats(ch: &Character) -> Stats {
-    let mut by_skill: HashMap<Skill, (usize, usize)> = HashMap::new();
+    let mut successes_per_skill: HashMap<Skill, usize> = HashMap::new();
+    let mut total_per_skill: HashMap<Skill, usize> = HashMap::new();
+    let mut total_roll_per_skill: HashMap<Skill, usize> = HashMap::new();
+
     let mut by_tool: HashMap<String, usize> = HashMap::new();
     let mut successes = 0usize;
     let mut failures = 0usize;
@@ -38,11 +50,12 @@ pub fn compute_stats(ch: &Character) -> Stats {
 
     for record in &ch.check_history {
         // by_skill
-        let entry = by_skill.entry(record.skill).or_insert((0, 0));
-        entry.1 += 1;
+        *total_per_skill.entry(record.skill).or_insert(0) += 1;
         if record.success {
-            entry.0 += 1;
+            *successes_per_skill.entry(record.skill).or_insert(0) += 1;
         }
+        *total_roll_per_skill.entry(record.skill).or_insert(0) +=
+            (record.roll.0 + record.roll.1) as usize;
 
         // by_tool — first token of context is the tool name
         let tool = record
@@ -78,6 +91,29 @@ pub fn compute_stats(ch: &Character) -> Stats {
         }
     }
 
+    let mut by_skill = HashMap::new();
+    for skill in total_per_skill.keys() {
+        let total = total_per_skill[skill];
+        let successes = successes_per_skill.get(skill).copied().unwrap_or(0);
+        let total_roll = total_roll_per_skill.get(skill).copied().unwrap_or(0);
+        let avg_roll = if total > 0 {
+            total_roll as f32 / total as f32
+        } else {
+            0.0
+        };
+        let last_used = ch.skill_last_used.get(skill).copied();
+
+        by_skill.insert(
+            *skill,
+            SkillStat {
+                successes,
+                total,
+                avg_roll,
+                last_used,
+            },
+        );
+    }
+
     // Current streak from end of history
     if let Some(last) = ch.check_history.last() {
         if last.success {
@@ -105,9 +141,6 @@ pub fn compute_stats(ch: &Character) -> Stats {
     let mut substances_used: HashMap<String, usize> = HashMap::new();
     for entry in &ch.journal {
         if entry.entry_type == EntryType::SubstanceUsed {
-            // Extract substance name from content — look for known patterns across genres.
-            // All templates reference the substance in first few words; extract bracketed or bare name.
-            // We parse out the substance from the content heuristically.
             let substance = extract_substance_from_entry(&entry.content);
             if !substance.is_empty() {
                 *substances_used.entry(substance).or_insert(0) += 1;
@@ -168,6 +201,20 @@ fn bar(fraction: f32, width: usize, filled_char: &str, empty_char: &str) -> Stri
     let filled = ((fraction * width as f32).round() as usize).min(width);
     let empty = width - filled;
     format!("{}{}", filled_char.repeat(filled), empty_char.repeat(empty))
+}
+
+fn format_time_ago(dt: DateTime<Utc>) -> String {
+    let now = Utc::now();
+    let diff = now.signed_duration_since(dt);
+    if diff.num_seconds() < 60 {
+        "just now".to_string()
+    } else if diff.num_minutes() < 60 {
+        format!("{}m ago", diff.num_minutes())
+    } else if diff.num_hours() < 24 {
+        format!("{}h ago", diff.num_hours())
+    } else {
+        format!("{}d ago", diff.num_days())
+    }
 }
 
 pub fn format_stats(stats: &Stats) -> String {
@@ -255,16 +302,12 @@ pub fn format_stats(stats: &Stats) -> String {
         lines.push(String::new());
         lines.push(format!("{}", "BY SKILL  (top 5)".bold()));
 
-        let mut skill_vec: Vec<(Skill, usize, usize)> = stats
-            .by_skill
-            .iter()
-            .map(|(s, (succ, total))| (*s, *succ, *total))
-            .collect();
-        skill_vec.sort_by(|a, b| b.2.cmp(&a.2).then(b.1.cmp(&a.1)));
+        let mut skill_vec: Vec<(Skill, &SkillStat)> = stats.by_skill.iter().map(|(s, st)| (*s, st)).collect();
+        skill_vec.sort_by(|a, b| b.1.total.cmp(&a.1.total).then(b.1.successes.cmp(&a.1.successes)));
 
-        for (skill, succ, total) in skill_vec.iter().take(5) {
-            let rate = if *total > 0 {
-                *succ as f32 / *total as f32
+        for (skill, st) in skill_vec.iter().take(5) {
+            let rate = if st.total > 0 {
+                st.successes as f32 / st.total as f32
             } else {
                 0.0
             };
@@ -282,14 +325,14 @@ pub fn format_stats(stats: &Stats) -> String {
                 skill.to_string().bold(),
                 mini_colored,
                 pct,
-                succ,
-                total
+                st.successes,
+                st.total
             ));
         }
 
         // Most and least used
-        let most = skill_vec.first().map(|(s, _, t)| (s, t));
-        let least = skill_vec.last().map(|(s, _, t)| (s, t));
+        let most = skill_vec.first().map(|(s, st)| (s, st.total));
+        let least = skill_vec.last().map(|(s, st)| (s, st.total));
         if let (Some((most_s, most_t)), Some((least_s, least_t))) = (most, least) {
             if most_s != least_s {
                 lines.push(String::new());
@@ -334,6 +377,58 @@ pub fn format_stats(stats: &Stats) -> String {
         sub_vec.sort_by(|a, b| b.1.cmp(&a.1));
         for (sub, count) in &sub_vec {
             lines.push(format!("  {} {}x", sub.magenta(), count.to_string().bold()));
+        }
+    }
+
+    // ── Full Skill Breakdown ──────────────────────────────────────────────────
+    if !stats.by_skill.is_empty() {
+        lines.push(String::new());
+        lines.push(format!("{}", "SKILL BREAKDOWN (sorted by usage)".bold()));
+        lines.push(format!(
+            "{}",
+            "──────────────────────────────────────────────────────────".dimmed()
+        ));
+        lines.push(format!(
+            "{:<20} {:<6} {:<7} {:<10} {:<15}",
+            "Skill", "Used", "Pass%", "Avg Roll", "Last Used"
+        ));
+        lines.push(format!(
+            "{}",
+            "──────────────────────────────────────────────────────────".dimmed()
+        ));
+
+        let mut skill_vec: Vec<(Skill, &SkillStat)> = stats.by_skill.iter().map(|(s, st)| (*s, st)).collect();
+        skill_vec.sort_by(|a, b| b.1.total.cmp(&a.1.total).then(b.1.successes.cmp(&a.1.successes)));
+
+        let now = Utc::now();
+
+        for (skill, st) in skill_vec {
+            let rate = if st.total > 0 {
+                st.successes as f32 / st.total as f32
+            } else {
+                0.0
+            };
+            let pct = (rate * 100.0).round() as u32;
+            
+            let last_used_str = if let Some(last) = st.last_used {
+                let mut s = format_time_ago(last);
+                let days_since = now.signed_duration_since(last).num_days();
+                if days_since >= 5 {
+                    s.push_str(&format!("  {}", "⚠ atrophy risk".yellow()));
+                }
+                s
+            } else {
+                "-".dimmed().to_string()
+            };
+
+            lines.push(format!(
+                "{:<20} {:<6} {}%     {:<10.1} {}",
+                skill.to_string().bold(),
+                st.total,
+                format!("{:>3}", pct),
+                st.avg_roll,
+                last_used_str
+            ));
         }
     }
 

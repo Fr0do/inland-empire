@@ -194,6 +194,19 @@ enum Commands {
         /// Second character name (default: active character)
         name2: Option<String>,
     },
+    /// Show check history
+    History {
+        #[arg(short, long, default_value = "20")]
+        n: usize,
+        #[arg(short, long)]
+        skill: Option<String>,
+        #[arg(long)]
+        failed: bool,
+        #[arg(long)]
+        passed: bool,
+    },
+    /// Show archive of permanent failures (red checks)
+    Failures,
     /// Generate shareable SVG character card
     Card {
         /// Character name (default: active character)
@@ -293,6 +306,13 @@ fn main() {
         Commands::Export { name, output } => cmd_export(name, output),
         Commands::Import { file } => cmd_import(&file),
         Commands::Compare { name1, name2 } => cmd_compare(&name1, name2.as_deref()),
+        Commands::History {
+            n,
+            skill,
+            failed,
+            passed,
+        } => cmd_history(n, skill.as_deref(), failed, passed),
+        Commands::Failures => cmd_failures(),
         Commands::Card { name, output } => cmd_card(name, output),
         Commands::Dashboard { port, no_open } => cmd_dashboard(port, no_open),
         Commands::Respec => cmd_respec(),
@@ -1546,6 +1566,323 @@ fn cmd_compare(name1: &str, name2: Option<&str>) {
             print!("{}", multiplayer::format_comparison(&comp));
         }
         Err(e) => eprintln!("{}", e),
+    }
+}
+
+fn attribute_label(attr: skills::Attribute) -> &'static str {
+    match attr {
+        skills::Attribute::Intellect => "Intellect",
+        skills::Attribute::Psyche => "Psyche",
+        skills::Attribute::Physique => "Physique",
+        skills::Attribute::Motorics => "Motorics",
+    }
+}
+
+fn failure_quotes(skill: Skill) -> &'static [&'static str] {
+    match skill {
+        Skill::Logic => &[
+            "Order collapses into static. The proof refuses to hold.",
+            "Your syllogism fractures. The chain drops its links.",
+            "Contradiction blooms like mold on the page.",
+            "Reason stutters. The equation blurs.",
+            "The conclusion is there, unreachable through this noise.",
+        ],
+        Skill::Encyclopedia => &[
+            "The fact drifts away like smoke.",
+            "Index cards scatter in your mind.",
+            "The reference you need has been redacted.",
+            "Your memory refuses to load this entry.",
+            "Footnotes turn to ash.",
+        ],
+        Skill::Rhetoric => &[
+            "Your argument buckles under its own weight.",
+            "The point lands dull, without edge.",
+            "The room hears you, then forgets.",
+            "Your logic circles itself into silence.",
+            "Conviction leaks out between the words.",
+        ],
+        Skill::Drama => &[
+            "The mask slips. The audience sees through it.",
+            "Your performance falters on the first beat.",
+            "The lie refuses to catch fire.",
+            "The spotlight finds your cracks.",
+            "No applause. Only the echo of failure.",
+        ],
+        Skill::Conceptualization => &[
+            "The shape of the idea dissolves mid-stroke.",
+            "The metaphor dies before it walks.",
+            "Your vision is a sketch in rain.",
+            "The concept collapses into ordinary clutter.",
+            "Imagination sputters, then goes dark.",
+        ],
+        Skill::VisualCalculus => &[
+            "The pattern hides in the noise.",
+            "Your inner diagram smears and fades.",
+            "Vectors misalign. The model lies.",
+            "The scene refuses to reconstruct.",
+            "Inference slips through the grid.",
+        ],
+        Skill::Volition => &[
+            "Resolve cracks with a quiet snap.",
+            "The spine of your will bends.",
+            "You reach for conviction and grasp mist.",
+            "The voice of doubt gets the last word.",
+            "You let the moment take you.",
+        ],
+        Skill::InlandEmpire => &[
+            "The pale wind is silent tonight.",
+            "Your intuition blinks out.",
+            "The whisper from beyond never comes.",
+            "The unseen door stays locked.",
+            "You knock on the void. It does not answer.",
+        ],
+        Skill::Empathy => &[
+            "The room is a wall of faces.",
+            "Their feelings are sealed away.",
+            "You reach out and touch nothing.",
+            "The emotional current is cold and dead.",
+            "No pulse. No signal. Just distance.",
+        ],
+        Skill::Authority => &[
+            "Your command lands like a whisper.",
+            "The order goes unheard.",
+            "Your stance softens, power draining away.",
+            "Respect refuses to arrive.",
+            "The room does not yield.",
+        ],
+        Skill::Esprit => &[
+            "The line goes quiet. No backup.",
+            "The chain of command breaks.",
+            "Your badge feels lighter than air.",
+            "The station does not pick up.",
+            "Camaraderie fails to load.",
+        ],
+        Skill::Suggestion => &[
+            "The hook slips, the mind stays free.",
+            "They blink, unconvinced.",
+            "Your charm hits a dead bolt.",
+            "The offer turns to dust mid-sentence.",
+            "Influence fizzles before it sparks.",
+        ],
+        Skill::Endurance => &[
+            "Your breath runs short. The body protests.",
+            "Stamina drains like a leaky flask.",
+            "You push and the muscle refuses.",
+            "The grind wears you down to the bone.",
+            "You tire before the work does.",
+        ],
+        Skill::PainThreshold => &[
+            "The hurt wins the negotiation.",
+            "Your tolerance cracks under pressure.",
+            "The sting is sharp and unyielding.",
+            "You flinch. You fold.",
+            "The ache writes the outcome.",
+        ],
+        Skill::PhysicalInstrument => &[
+            "Your strength slides off the task.",
+            "The weight stays put, unmoved.",
+            "The blow lands soft.",
+            "Muscle memory fails to ignite.",
+            "Force without direction is just noise.",
+        ],
+        Skill::Electrochemistry => &[
+            "The thrill fizzles out.",
+            "The spark refuses to jump.",
+            "The craving goes unanswered, cold.",
+            "Your nerves stay silent.",
+            "The body denies its own fuel.",
+        ],
+        Skill::Shivers => &[
+            "The city does not shiver back.",
+            "The street stays mute.",
+            "The wind carries no message.",
+            "The past leaves no tracks here.",
+            "The hairs on your neck lie flat.",
+        ],
+        Skill::HalfLight => &[
+            "The predator in you sleeps.",
+            "Your edge dulls. The threat fades.",
+            "The fight drains out of your eyes.",
+            "No bark. No bite. Just stillness.",
+            "Fear does not come to your aid.",
+        ],
+        Skill::HandEyeCoordination => &[
+            "Your fingers miss their mark.",
+            "The motion breaks at the wrist.",
+            "Timing slips; the action shatters.",
+            "The move is late, then wrong.",
+            "Precision deserts you.",
+        ],
+        Skill::Perception => &[
+            "The clue sits in plain sight, unseen.",
+            "Your senses skim the surface.",
+            "The detail slips past your notice.",
+            "The signal is there; you do not hear it.",
+            "Awareness blinks and you miss it.",
+        ],
+        Skill::ReactionSpeed => &[
+            "You are a beat too late.",
+            "The moment passes before you move.",
+            "Reflex turns to molasses.",
+            "You hesitate, and the window closes.",
+            "Speed abandons you at the worst time.",
+        ],
+        Skill::Savoir => &[
+            "The swagger fades into awkwardness.",
+            "Your cool fractures under the lights.",
+            "Style stumbles into clumsiness.",
+            "You misstep, and the room notices.",
+            "The flourish falls flat.",
+        ],
+        Skill::Interfacing => &[
+            "The mechanism refuses your touch.",
+            "Your hands do not speak its language.",
+            "The lock stays stubborn, unpicked.",
+            "You fumble the delicate part.",
+            "The system rejects your intent.",
+        ],
+        Skill::Composure => &[
+            "The mask cracks. The truth leaks.",
+            "Your poise collapses in plain view.",
+            "A tremor betrays you.",
+            "Control slips, and panic shows.",
+            "You cannot keep it together.",
+        ],
+    }
+}
+
+fn cmd_failures() {
+    let ch = match Character::load_active() {
+        Ok(c) => c,
+        Err(e) => {
+            eprintln!("{}", e);
+            return;
+        }
+    };
+
+    use colored::Colorize;
+    use skills::Attribute;
+
+    let failures: Vec<_> = ch
+        .check_history
+        .iter()
+        .filter(|r| r.check_color == CheckColor::Red && !r.success)
+        .collect();
+
+    if failures.is_empty() {
+        println!("{}", "No permanent failures on record. Yet.".dimmed());
+        return;
+    }
+
+    println!("{}", "RED CHECK ARCHIVE".red().bold());
+
+    for record in &failures {
+        println!("{}", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━".dimmed());
+
+        let skill_name = record.skill.to_string().to_uppercase();
+        let attr = record.skill.attribute();
+        let colored_skill = match attr {
+            Attribute::Intellect => skill_name.blue(),
+            Attribute::Psyche => skill_name.magenta(),
+            Attribute::Physique => skill_name.red(),
+            Attribute::Motorics => skill_name.yellow(),
+        };
+        let ts = record.timestamp.format("%Y-%m-%d %H:%M");
+
+        println!(
+            "{} {} [{}] — {}",
+            "✗".red(),
+            colored_skill,
+            attribute_label(attr),
+            ts
+        );
+
+        let diff = Difficulty::from_threshold(record.difficulty).label();
+        println!(
+            "  Roll: {}+{}{:+}={} vs DC{} ({})",
+            record.roll.0,
+            record.roll.1,
+            record.modifier,
+            record.total,
+            record.difficulty,
+            diff
+        );
+        println!("  Action: {}", record.context);
+
+        let quotes = failure_quotes(record.skill);
+        let idx = (record.roll.0 as usize + record.roll.1 as usize) % quotes.len();
+        println!("  \"{}\"", quotes[idx]);
+    }
+
+    println!(
+        "{}",
+        format!("Total permanent failures: {}", failures.len())
+            .red()
+    );
+}
+
+fn cmd_history(n: usize, skill_filter: Option<&str>, failed_only: bool, passed_only: bool) {
+    let ch = match Character::load_active() {
+        Ok(c) => c,
+        Err(e) => {
+            eprintln!("{}", e);
+            return;
+        }
+    };
+
+    use colored::Colorize;
+    use skills::Attribute;
+
+    let filtered: Vec<_> = ch.check_history
+        .iter()
+        .filter(|r| {
+            if let Some(skill_name) = skill_filter {
+                if !r.skill.to_string().to_lowercase().eq(&skill_name.to_lowercase()) {
+                    return false;
+                }
+            }
+            if failed_only && r.success {
+                return false;
+            }
+            if passed_only && !r.success {
+                return false;
+            }
+            true
+        })
+        .rev()
+        .take(n)
+        .collect();
+
+    if filtered.is_empty() {
+        println!("No check history found matching your filters.");
+        return;
+    }
+
+    for r in filtered {
+        let ts = r.timestamp.format("%Y-%m-%d %H:%M").to_string().dimmed();
+        let icon = if r.success { "✓".green() } else { "✗".red() };
+        
+        let skill_name = format!("{:<14}", r.skill.to_string());
+        let attr = r.skill.attribute();
+        let colored_skill = match attr {
+            Attribute::Intellect => skill_name.blue(),
+            Attribute::Psyche => skill_name.magenta(),
+            Attribute::Physique => skill_name.red(),
+            Attribute::Motorics => skill_name.yellow(),
+        };
+
+        println!(
+            "{} {} {} [{}+{}{:+1}={} vs DC{}] {}",
+            ts,
+            icon,
+            colored_skill,
+            r.roll.0,
+            r.roll.1,
+            r.modifier,
+            r.total,
+            r.difficulty,
+            r.context.dimmed()
+        );
     }
 }
 
