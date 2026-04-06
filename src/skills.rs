@@ -350,6 +350,7 @@ mod tests {
         assert_eq!(Skill::for_tool("Read", "src/checks.rs"), Skill::Perception);
         assert_eq!(Skill::for_tool("Read", "config.toml"), Skill::VisualCalculus);
         assert_eq!(Skill::for_tool("Edit", "src/main_test.rs"), Skill::Logic);
+        assert_eq!(Skill::for_tool("Glob", "**/*.rs"), Skill::VisualCalculus);
         assert_eq!(Skill::for_tool("Bash", "docker-compose up"), Skill::Interfacing);
         assert_eq!(Skill::for_tool("Bash", "echo hello"), Skill::Drama);
     }

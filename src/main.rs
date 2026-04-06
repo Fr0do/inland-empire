@@ -1541,6 +1541,7 @@ fn cmd_import(file: &str) {
             if ch.name != original_name {
                 println!("Name conflict: renamed to {}", ch.name);
             }
+            ch.migrate();
             ch.save().expect("Failed to save imported character");
             println!("Imported {} from {}", ch.name, file);
         }

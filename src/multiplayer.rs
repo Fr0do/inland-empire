@@ -1,6 +1,7 @@
 use crate::character::Character;
-use crate::skills::{Attribute, Skill};
+use crate::skills::Skill;
 use crate::stats::compute_stats;
+use chrono::{DateTime, Utc};
 use colored::Colorize;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
@@ -10,28 +11,22 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize)]
 pub struct PortableCharacter {
     pub version: u32,
-    pub exported_at: chrono::DateTime<chrono::Utc>,
+    pub exported_at: DateTime<Utc>,
     pub character: Character,
 }
 
 pub fn export_character(ch: &Character) -> Result<String, String> {
     let portable = PortableCharacter {
         version: 1,
-        exported_at: chrono::Utc::now(),
+        exported_at: Utc::now(),
         character: ch.clone(),
     };
     serde_json::to_string_pretty(&portable).map_err(|e| e.to_string())
 }
 
 pub fn import_character(json: &str) -> Result<Character, String> {
-    let portable: PortableCharacter =
-        serde_json::from_str(json).map_err(|e| format!("Invalid .ie.json: {e}"))?;
-    if portable.version != 1 {
-        return Err(format!("Unsupported format version: {}", portable.version));
-    }
-    let mut ch = portable.character;
-    ch.migrate();
-    Ok(ch)
+    let portable: PortableCharacter = serde_json::from_str(json).map_err(|e| e.to_string())?;
+    Ok(portable.character)
 }
 
 pub fn resolve_name_conflict(name: &str, existing: &[String]) -> String {
@@ -68,13 +63,9 @@ pub struct CharacterSummary {
     pub archetype: String,
     pub level: u32,
     pub total_xp: u32,
-    pub total_checks: usize,
-    pub pass_rate: f64,
-    pub best_streak: usize,
-    pub worst_streak: usize,
-    pub critical_successes: usize,
-    pub top_skills: Vec<(Skill, i8)>,
-    pub attributes: Vec<(Attribute, u8)>,
+    pub pass_rate: f64,    // 0.0–1.0
+    pub best_streak: u32,
+    pub top_skills: Vec<String>,  // top 3 skills by usage
 }
 
 pub struct Comparison {
@@ -83,41 +74,31 @@ pub struct Comparison {
     pub verdicts: Vec<Verdict>,
 }
 
-fn summarize(ch: &Character) -> CharacterSummary {
+pub fn summarize(ch: &Character) -> CharacterSummary {
     let stats = compute_stats(ch);
     let pass_rate = if stats.total_checks > 0 {
-        stats.successes as f64 / stats.total_checks as f64 * 100.0
+        stats.successes as f64 / stats.total_checks as f64
     } else {
         0.0
     };
 
-    // Top 3 skills by effective value
-    let mut skills: Vec<(Skill, i8)> = Skill::all()
-        .iter()
-        .map(|s| (*s, ch.effective_skill(*s)))
-        .collect();
-    skills.sort_by(|a, b| b.1.cmp(&a.1));
-    let top_skills = skills.into_iter().take(3).collect();
-
-    let attributes = vec![
-        (Attribute::Intellect, ch.attributes.get(&Attribute::Intellect).copied().unwrap_or(1)),
-        (Attribute::Psyche, ch.attributes.get(&Attribute::Psyche).copied().unwrap_or(1)),
-        (Attribute::Physique, ch.attributes.get(&Attribute::Physique).copied().unwrap_or(1)),
-        (Attribute::Motorics, ch.attributes.get(&Attribute::Motorics).copied().unwrap_or(1)),
-    ];
+    // Top 3 skills by usage (from check_history)
+    let mut skill_counts: std::collections::HashMap<Skill, usize> = std::collections::HashMap::new();
+    for record in &ch.check_history {
+        *skill_counts.entry(record.skill).or_insert(0) += 1;
+    }
+    let mut skill_vec: Vec<(Skill, usize)> = skill_counts.into_iter().collect();
+    skill_vec.sort_by(|a, b| b.1.cmp(&a.1));
+    let top_skills = skill_vec.into_iter().take(3).map(|(s, _)| s.to_string()).collect();
 
     CharacterSummary {
         name: ch.name.clone(),
         archetype: ch.archetype.clone(),
         level: ch.level,
         total_xp: stats.total_xp,
-        total_checks: stats.total_checks,
         pass_rate,
-        best_streak: stats.best_streak,
-        worst_streak: stats.worst_streak,
-        critical_successes: stats.critical_successes,
+        best_streak: stats.best_streak as u32,
         top_skills,
-        attributes,
     }
 }
 
@@ -147,29 +128,20 @@ pub fn compare(left: &Character, right: &Character) -> Comparison {
         verdict("Total XP", ls.total_xp as f64, rs.total_xp as f64,
                 &ls.total_xp.to_string(), &rs.total_xp.to_string()),
         verdict("Pass Rate", ls.pass_rate, rs.pass_rate,
-                &format!("{:.0}%", ls.pass_rate), &format!("{:.0}%", rs.pass_rate)),
-        verdict("Total Checks", ls.total_checks as f64, rs.total_checks as f64,
-                &ls.total_checks.to_string(), &rs.total_checks.to_string()),
+                &format!("{:.1}%", ls.pass_rate * 100.0), &format!("{:.1}%", rs.pass_rate * 100.0)),
         verdict("Best Streak", ls.best_streak as f64, rs.best_streak as f64,
                 &ls.best_streak.to_string(), &rs.best_streak.to_string()),
-        verdict("Worst Streak", rs.worst_streak as f64, ls.worst_streak as f64, // lower is better
-                &ls.worst_streak.to_string(), &rs.worst_streak.to_string()),
-        verdict("Critical ✓", ls.critical_successes as f64, rs.critical_successes as f64,
-                &ls.critical_successes.to_string(), &rs.critical_successes.to_string()),
     ];
 
-    // Attribute verdicts
-    for (attr, lv) in &ls.attributes {
-        let rv = rs.attributes.iter()
-            .find(|(a, _)| a == attr)
-            .map(|(_, v)| *v)
-            .unwrap_or(1);
-        verdicts.push(verdict(
-            &attr.to_string(),
-            *lv as f64, rv as f64,
-            &lv.to_string(), &rv.to_string(),
-        ));
-    }
+    // Top Skill (comparing top skill name might be weird, but let's just pick one category for it)
+    let left_top = ls.top_skills.first().cloned().unwrap_or_else(|| "None".to_string());
+    let right_top = rs.top_skills.first().cloned().unwrap_or_else(|| "None".to_string());
+    verdicts.push(Verdict {
+        category: "Top Skill".to_string(),
+        left_val: left_top,
+        right_val: right_top,
+        winner: Winner::Tie, // Skills are incomparable by value here
+    });
 
     Comparison { left: ls, right: rs, verdicts }
 }
@@ -205,7 +177,7 @@ fn pick_flavor(comp: &Comparison) -> &'static str {
 
     let pool = if diff == 0 {
         FLAVOR_TIE
-    } else if diff >= 4 {
+    } else if diff >= 3 {
         FLAVOR_DECISIVE
     } else {
         FLAVOR_CLOSE
@@ -355,13 +327,11 @@ pub fn format_comparison(comp: &Comparison) -> String {
 
     // Top skills comparison
     out.push_str(&format!("\n{}  Top Skills\n", "★".yellow()));
-    for (i, (skill, level)) in comp.left.top_skills.iter().enumerate() {
-        let right_skill = comp.right.top_skills.get(i);
-        let left_str = format!("{} {}", skill, level);
-        let right_str = right_skill
-            .map(|(s, l)| format!("{} {}", s, l))
-            .unwrap_or_default();
-        out.push_str(&format!("  {:>28}    {:<28}\n", left_str.cyan(), right_str.cyan()));
+    let max_skills = comp.left.top_skills.len().max(comp.right.top_skills.len());
+    for i in 0..max_skills {
+        let left_skill = comp.left.top_skills.get(i).cloned().unwrap_or_default();
+        let right_skill = comp.right.top_skills.get(i).cloned().unwrap_or_default();
+        out.push_str(&format!("  {:>28}    {:<28}\n", left_skill.cyan(), right_skill.cyan()));
     }
 
     out.push('\n');

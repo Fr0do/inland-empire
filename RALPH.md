@@ -4,7 +4,7 @@ Agent instructions: Read CLAUDE.md first. Build with `rtk cargo build`. Pick tas
 
 ---
 
-## [ ] Add `ie history` command — paginated check history viewer
+## [x] Add `ie history` command — paginated check history viewer
 
 Show last N checks with filtering by skill/outcome.
 
@@ -43,7 +43,7 @@ Use `colored` crate for output. Green ✓ / red ✗. Skill colored by attribute 
 
 ---
 
-## [ ] Add morale/health bar to `ie status --oneline`
+## [x] Add morale/health bar to `ie status --oneline`
 
 Currently: `Psychic L23 ❤🖤🖤🖤 ☀ 💭4/6 XP:545/2300 ★Inland Empire +1SP`
 
@@ -57,7 +57,7 @@ Also update the full `ie status` sheet to show morale with its own colored bar (
 
 ---
 
-## [ ] Write tests for skill routing in src/skills.rs
+## [x] Write tests for skill routing in src/skills.rs
 
 The `Skill::for_tool(tool, context)` function maps tools+context to skills. It has no tests. Add a `#[cfg(test)]` module at the bottom of `src/skills.rs` with test cases:
 
@@ -75,10 +75,95 @@ The `Skill::for_tool(tool, context)` function maps tools+context to skills. It h
 Run with `rtk cargo test`. All tests must pass.
 
 ### Updates
+- Added the missing `Glob` routing assertion and verified the requested cases match current routing behavior.
 
 ---
 
-## [ ] Improve `ie stats` output — add skill breakdown table
+## [x] Export/Import characters — `ie export` / `ie import`
+
+New module `src/multiplayer.rs`. Export active character to `{name}.ie.json`, import from JSON.
+
+```rust
+pub struct PortableCharacter { version: u32, exported_at: DateTime<Utc>, character: Character }
+pub fn export_character(ch: &Character) -> Result<String, String>
+pub fn import_character(json: &str) -> Result<Character, String>
+fn resolve_name_conflict(name: &str, existing: &[String]) -> String  // name-2, name-3...
+```
+
+Add to `src/character.rs`: extract `pub fn migrate(&mut self)` so imported chars run the same migrations as disk-loaded ones.
+
+Add to `src/main.rs`:
+```rust
+Export { name: Option<String>, output: Option<String> }
+Import { file: String }
+```
+
+Build with `rtk cargo build`. No new deps needed (serde_json already present).
+
+### Updates
+- `multiplayer::import_character` now only deserializes; `cmd_import` applies `Character::migrate()` after resolving name conflicts.
+
+---
+
+## [x] Compare characters — `ie compare`
+
+In `src/multiplayer.rs`:
+```rust
+pub struct Comparison { left: CharacterSummary, right: CharacterSummary, verdicts: Vec<Verdict> }
+pub struct CharacterSummary { name, archetype, level, total_xp, pass_rate, best_streak, top_skills, attributes }
+pub struct Verdict { category: String, left_val: String, right_val: String, winner: Winner }
+pub enum Winner { Left, Right, Tie }
+pub fn compare(left: &Character, right: &Character) -> Comparison
+pub fn format_comparison(comp: &Comparison) -> String  // colored terminal output
+```
+
+DE-style: add random flavor text from attribute voices (AUTHORITY, INLAND EMPIRE, etc.) to the comparison output.
+
+Add to `src/main.rs`:
+```rust
+Compare { name1: String, name2: Option<String> }  // name2=None → compare with active
+```
+
+Output: side-by-side terminal table, winner highlighted green.
+
+### Updates
+
+---
+
+## [ ] SVG character card — `ie card`
+
+In `src/multiplayer.rs`:
+```rust
+pub fn generate_card(ch: &Character) -> String  // standalone SVG 600×400
+```
+
+Make `svg_radar_chart` and `svg_portrait` in `src/dashboard.rs` `pub(crate)`. Reuse them in the card.
+Layout: portrait left, radar chart right, key stats (level, pass rate, streak, top skill) in center strip.
+Save to `{name}-card.svg`.
+
+Add to `src/main.rs`:
+```rust
+Card { name: Option<String>, output: Option<String> }
+```
+
+### Updates
+
+---
+
+## [x] Dashboard leaderboard — `/leaderboard` route
+
+In `src/dashboard.rs`:
+1. Add "Leaderboard" link to nav
+2. New route: `/leaderboard` → `page_leaderboard()`
+3. `page_leaderboard()`: load all profiles via `list_profiles()` + `Character::load`, compute stats for each, render HTML table sorted by level (desc) with columns: rank, name, archetype, level, pass rate, checks, best streak, XP
+
+No new deps needed.
+
+### Updates
+
+---
+
+## [x] Improve `ie stats` output — add skill breakdown table
 
 Currently `ie stats` shows aggregate pass rate and top skills. Add a full skill breakdown table:
 
