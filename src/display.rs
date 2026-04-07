@@ -22,7 +22,7 @@ pub fn character_sheet(ch: &Character) -> String {
     let hearts: String =
         "❤️".repeat(ch.health as usize) + &"🖤".repeat((ch.max_health - ch.health) as usize);
     let thoughts: String =
-        "💭".repeat(ch.morale as usize) + &"░".repeat((ch.max_morale - ch.morale) as usize);
+        "💙".repeat(ch.morale as usize) + &"🩶".repeat((ch.max_morale - ch.morale) as usize);
     out.push_str(&format!(
         "Health: {} ({}/{})  |  Morale: {} ({}/{})\n",
         hearts, ch.health, ch.max_health, thoughts, ch.morale, ch.max_morale

@@ -247,7 +247,7 @@ impl Character {
             .get(&skill)
             .copied()
             .unwrap_or(0);
-        base + thought_bonus + signature_bonus + time_bonus + substance_bonus + equipment_bonus
+        (base + thought_bonus + signature_bonus + time_bonus + substance_bonus + equipment_bonus).max(1)
     }
 
     pub fn xp_to_next_level(&self) -> u32 {
