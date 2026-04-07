@@ -130,7 +130,7 @@ Output: side-by-side terminal table, winner highlighted green.
 
 ---
 
-## [ ] SVG character card — `ie card`
+## [x] SVG character card — `ie card`
 
 In `src/multiplayer.rs`:
 ```rust
@@ -147,6 +147,10 @@ Card { name: Option<String>, output: Option<String> }
 ```
 
 ### Updates
+- Implemented `generate_card` in `multiplayer.rs` (standalone 600x400 SVG).
+- Added `Card` subcommand to `main.rs` with short/long flags.
+- Reused existing portrait and radar chart SVG generators.
+
 
 ---
 

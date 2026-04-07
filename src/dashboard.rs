@@ -932,7 +932,6 @@ pub(crate) fn svg_portrait(ch: &Character) -> String {
         r#"<svg width="220" height="420" viewBox="0 0 220 420" xmlns="http://www.w3.org/2000/svg" style="background:transparent">
 <!-- Hat -->
 {hat}
-{hat_label}
 <!-- Head -->
 <rect x="80" y="40" width="60" height="65" rx="10" fill="{body_fill}" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
 {eye_left}
@@ -944,21 +943,17 @@ pub(crate) fn svg_portrait(ch: &Character) -> String {
 <rect x="105" y="108" width="10" height="15" rx="2" fill="{body_fill}" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
 <!-- Jacket -->
 {jacket}
-{jacket_label}
 <!-- Shirt -->
 {shirt}
-{shirt_label}
 <!-- Arms -->
 <rect x="42" y="128" width="15" height="80" rx="4" fill="{body_fill}" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
 <rect x="163" y="128" width="15" height="80" rx="4" fill="{body_fill}" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
 <!-- Pants -->
 {pants_l}
 {pants_r}
-{pants_label}
 <!-- Shoes -->
 {shoes_l}
 {shoes_r}
-{shoes_label}
 <!-- HP bar -->
 <text x="28" y="377" fill="{hp_color}" font-size="8" font-family="monospace">HP</text>
 <rect x="40" y="369" width="150" height="8" rx="2" fill="rgba(255,255,255,0.08)"/>
@@ -967,6 +962,12 @@ pub(crate) fn svg_portrait(ch: &Character) -> String {
 <text x="22" y="395" fill="{morale_color}" font-size="8" font-family="monospace">MP</text>
 <rect x="40" y="387" width="150" height="8" rx="2" fill="rgba(255,255,255,0.08)"/>
 <rect x="40" y="387" width="{morale_pct:.0}" height="8" rx="2" fill="{morale_color}"/>
+<!-- Item labels on top -->
+{hat_label}
+{jacket_label}
+{shirt_label}
+{pants_label}
+{shoes_label}
 </svg>"#,
         hat = equipped_rect(&EquipSlot::Hat, 75.0, 10.0, 70.0, 25.0, 5.0),
         hat_label = item_label(&EquipSlot::Hat, 110.0, 43.0),

@@ -188,97 +188,87 @@ fn pick_flavor(comp: &Comparison) -> &'static str {
 }
 
 pub fn generate_card(ch: &Character) -> String {
-    // Get theme colors
     let t = crate::storybook::theme(ch.genre);
-    let stats = compute_stats(ch);
+    let stats = crate::stats::compute_stats(ch);
+    let summary = summarize(ch);
+
     let pass_rate = if stats.total_checks > 0 {
-        format!("{:.0}%", stats.successes as f64 / stats.total_checks as f64 * 100.0)
+        format!("{:.1}%", (stats.successes as f64 / stats.total_checks as f64) * 100.0)
     } else {
-        "—".to_string()
+        "0%".to_string()
     };
 
-    // Get the radar chart SVG (300x300) and portrait SVG (220x420)
-    // We'll embed them scaled inside our card
-    let radar = crate::dashboard::svg_radar_chart(ch);
-    let portrait = crate::dashboard::svg_portrait(ch);
+    let top_skill = summary.top_skills.first().cloned().unwrap_or_else(|| "None".to_string());
+
+    let portrait_svg = crate::dashboard::svg_portrait(ch);
+    let radar_svg = crate::dashboard::svg_radar_chart(ch);
 
     let name = crate::storybook::escape_html(&ch.name);
     let archetype = crate::storybook::escape_html(&ch.archetype);
 
     format!(
-        r##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 420" width="800" height="420">
-  <defs>
-    <style>
-      .card-bg {{ fill: {bg}; }}
-      .card-border {{ fill: none; stroke: {border}; stroke-width: 2; }}
-      .card-name {{ fill: {accent}; font-family: {header_font}; font-size: 22px; font-weight: bold; }}
-      .card-sub {{ fill: {muted}; font-family: {font_stack}; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; }}
-      .card-stat-val {{ fill: {accent}; font-family: {font_stack}; font-size: 20px; font-weight: bold; }}
-      .card-stat-label {{ fill: {muted}; font-family: {font_stack}; font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; }}
-      .card-divider {{ stroke: {border}; stroke-width: 1; }}
-      .card-brand {{ fill: {muted}; font-family: {font_stack}; font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; opacity: 0.5; }}
-    </style>
-  </defs>
-  <!-- Background -->
-  <rect class="card-bg" width="800" height="420" rx="8"/>
-  <rect class="card-border" x="1" y="1" width="798" height="418" rx="8"/>
-
-  <!-- Portrait (scaled down, left side) -->
-  <g transform="translate(15, 0) scale(0.85)">
-    {portrait}
+        r##"<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="600" height="400" viewBox="0 0 600 400" xmlns="http://www.w3.org/2000/svg">
+  <rect width="600" height="400" fill="#1a1a2e" />
+  
+  <!-- Left Section: Portrait -->
+  <g transform="translate(-10, -10) scale(0.95)">
+    {portrait_svg}
   </g>
 
-  <!-- Divider -->
-  <line class="card-divider" x1="210" y1="20" x2="210" y2="400"/>
-
-  <!-- Name & info -->
-  <text class="card-name" x="230" y="45">{name}</text>
-  <text class="card-sub" x="230" y="65">{archetype}  ·  Level {level}  ·  {genre}</text>
-
-  <!-- Stats row -->
-  <text class="card-stat-val" x="230" y="110">{level}</text>
-  <text class="card-stat-label" x="230" y="125">Level</text>
-
-  <text class="card-stat-val" x="310" y="110">{checks}</text>
-  <text class="card-stat-label" x="310" y="125">Checks</text>
-
-  <text class="card-stat-val" x="410" y="110">{pass_rate}</text>
-  <text class="card-stat-label" x="410" y="125">Pass Rate</text>
-
-  <text class="card-stat-val" x="510" y="110">{streak}</text>
-  <text class="card-stat-label" x="510" y="125">Best Streak</text>
-
-  <text class="card-stat-val" x="620" y="110">{crits}</text>
-  <text class="card-stat-label" x="620" y="125">Criticals</text>
-
-  <line class="card-divider" x1="230" y1="140" x2="780" y2="140"/>
-
-  <!-- Radar chart (scaled, right side) -->
-  <g transform="translate(380, 130) scale(0.88)">
-    {radar}
+  <!-- Right Section: Radar Chart -->
+  <g transform="translate(410, 80) scale(0.65)">
+    {radar_svg}
   </g>
 
-  <!-- Brand -->
-  <text class="card-brand" x="230" y="405">Inland Empire</text>
-</svg>"##,
-        bg = t.bg,
-        border = t.border,
+  <!-- Center Strip: Key Stats -->
+  <g transform="translate(200, 40)">
+    <text x="100" y="20" fill="{accent}" font-family="{header_font}" font-size="28" font-weight="bold" text-anchor="middle">{name}</text>
+    <text x="100" y="45" fill="{muted}" font-family="{font_stack}" font-size="14" text-anchor="middle" letter-spacing="0.1em">{archetype}</text>
+    
+    <line x1="20" y1="70" x2="180" y2="70" stroke="{border}" stroke-width="1" opacity="0.5" />
+    
+    <g transform="translate(0, 90)">
+        <text x="100" y="0" fill="{muted}" font-family="{font_stack}" font-size="10" text-anchor="middle" text-transform="uppercase">Level</text>
+        <text x="100" y="25" fill="{accent}" font-family="{font_stack}" font-size="24" font-weight="bold" text-anchor="middle">{level}</text>
+    </g>
+
+    <g transform="translate(0, 150)">
+        <text x="100" y="0" fill="{muted}" font-family="{font_stack}" font-size="10" text-anchor="middle" text-transform="uppercase">Pass Rate</text>
+        <text x="100" y="25" fill="{accent}" font-family="{font_stack}" font-size="24" font-weight="bold" text-anchor="middle">{pass_rate}</text>
+    </g>
+
+    <g transform="translate(0, 210)">
+        <text x="100" y="0" fill="{muted}" font-family="{font_stack}" font-size="10" text-anchor="middle" text-transform="uppercase">Best Streak</text>
+        <text x="100" y="25" fill="{accent}" font-family="{font_stack}" font-size="24" font-weight="bold" text-anchor="middle">{streak}</text>
+    </g>
+
+    <g transform="translate(0, 270)">
+        <text x="100" y="0" fill="{muted}" font-family="{font_stack}" font-size="10" text-anchor="middle" text-transform="uppercase">Top Skill</text>
+        <text x="100" y="25" fill="{accent}" font-family="{font_stack}" font-size="18" font-weight="bold" text-anchor="middle">{top_skill}</text>
+    </g>
+
+    <line x1="20" y1="320" x2="180" y2="320" stroke="{border}" stroke-width="1" opacity="0.5" />
+    <text x="100" y="345" fill="{muted}" font-family="{font_stack}" font-size="9" text-anchor="middle" letter-spacing="0.2em" opacity="0.4">INLAND EMPIRE</text>
+  </g>
+</svg>
+"##,
         accent = t.accent,
         muted = t.muted,
+        border = t.border,
         header_font = t.header_font,
         font_stack = t.font_stack,
         name = name,
         archetype = archetype,
         level = ch.level,
-        genre = ch.genre,
-        checks = stats.total_checks,
         pass_rate = pass_rate,
         streak = stats.best_streak,
-        crits = stats.critical_successes,
-        portrait = portrait,
-        radar = radar,
+        top_skill = top_skill,
+        portrait_svg = portrait_svg,
+        radar_svg = radar_svg,
     )
 }
+
 
 pub fn format_comparison(comp: &Comparison) -> String {
     let mut out = String::new();

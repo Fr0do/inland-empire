@@ -210,6 +210,7 @@ enum Commands {
     /// Generate shareable SVG character card
     Card {
         /// Character name (default: active character)
+        #[arg(short, long)]
         name: Option<String>,
         /// Output file path
         #[arg(short, long)]
